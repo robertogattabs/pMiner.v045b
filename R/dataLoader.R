@@ -112,6 +112,19 @@ dataLoader<-function( verbose.mode = TRUE, max.char.length.label = 50, save.memo
     return(daRestituire)
   }
   #=================================================================================
+  # filterPatProcess
+  #=================================================================================   
+  filterPatProcess <- function( CSV.completo, array.events.to.remove, array.events.to.keep, posizione.colonna.evento) {
+    if( length(array.events.to.remove) > 0 ){
+      CSV.completo <- CSV.completo[!(CSV.completo[,param.EVENTName] %in% array.events.to.remove),]
+    }
+    if( length(array.events.to.keep) > 0 ){
+      CSV.completo <- CSV.completo[ CSV.completo[,param.EVENTName] %in% array.events.to.keep ,]
+    }
+    return( CSV.completo )
+  }
+  
+  #=================================================================================
   # ricalcolaCSV
   # Ricalcola il CSV togliendo pazienti e/o eventi a piacere
   #=================================================================================   
@@ -147,8 +160,11 @@ dataLoader<-function( verbose.mode = TRUE, max.char.length.label = 50, save.memo
     # array.events.to.remove e array.events.to.keep
     posizione.colonna.evento <- which(colnames(pat.process[[1]]) == param.EVENTName) -1
     if(length(array.events.to.remove)>0 | length(array.events.to.keep)>0) {
-      res <- filterPatProcess( CSV.completo, c(":)",array.events.to.remove), c(":)",array.events.to.keep) , posizione.colonna.evento  ) 
-      CSV.completo <- CSV.completo[res$rigaDaTenere,]
+      # -im
+      CSV.completo <- filterPatProcess( CSV.completo, array.events.to.remove, array.events.to.keep , posizione.colonna.evento  ) 
+      # res <- filterPatProcess( CSV.completo, array.events.to.remove, array.events.to.keep , posizione.colonna.evento  ) 
+      # CSV.completo <- CSV.completo[res$rigaDaTenere,]
+      # -fm
     }
 
     # 'remove.events.by.attribute.name' e 'keep.events.by.attribute.name'

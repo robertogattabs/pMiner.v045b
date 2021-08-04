@@ -866,7 +866,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
   }  
   pathBeetweenStackedNodes <- function( fromState , toState, stratifyFor = "" , minPath = FALSE, stratificationValues , fisher.threshold = 0.1,
                                         kindOfGraph = "dot", arcColor = "black", arc.fontsize = 10, arc.fontcolor = "red",
-                                        arr.States.color=c(), set.to.gray.color= "WhiteSmoke", p.value.threshold = 0.05 ) {
+                                        arr.States.color=c(), set.to.gray.color= "WhiteSmoke", p.value.threshold = 0.05,
+                                        giveBackMatrix = FALSE ) {
     
     stratify <- FALSE
     parameter.arcColor <- arcColor
@@ -877,22 +878,34 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     a <- unlist(lapply(1:length(loadedDataset$wordSequence.raw), function(i) {  
       a <- which(loadedDataset$wordSequence.raw[[i]]==fromState)
       b <- which(loadedDataset$wordSequence.raw[[i]]==toState)
+      if( fromState == "BEGIN") { a <- 1 }
+      if( toState == "END")   { b <- length(loadedDataset$wordSequence.raw[[i]]) }
       if(length(a)==0 | length(b)==0) return(FALSE)
       if( min(a) < min(b) ) return(TRUE) 
       return(FALSE)  
     }  ))
     IPP.all <- names(loadedDataset$wordSequence.raw)[a]
-    
+    if( length(IPP.all) == 0 ) return()
+    # browser()
     # extract the possible occurencies
     lst.path <- lapply( IPP.all , function(IPP) {
       a <- which(loadedDataset$wordSequence.raw[[IPP]]==fromState)
       b <- which(loadedDataset$wordSequence.raw[[IPP]]==toState)   
+      if( fromState == "BEGIN") { a <- 1 }
+      if( toState == "END")   { b <- length(loadedDataset$wordSequence.raw[[IPP]]) }
       if( minPath == TRUE ) { inizio <- max(a[a < b])
       } else {  inizio <- min(a) }
       fine <- min(b[b>inizio])  
-      return( loadedDataset$wordSequence.raw[[IPP]][inizio:fine] )
+      cosa.ritornare <- loadedDataset$wordSequence.raw[[IPP]][inizio:fine]
+      if( fromState == "BEGIN") cosa.ritornare <- c( "BEGIN", cosa.ritornare )
+      if( toState == "END") cosa.ritornare <- c( cosa.ritornare , "END")
+      return( cosa.ritornare )
     })
+    # browser()
     str.path <- unlist(lapply( lst.path, function(x) {paste( x, collapse = "->" )}))
+    # if( fromState == "BEGIN") lst.path <- unlist(lapply(1:length(str.path),function(i){ paste( c("BEGIN->",str_trim(str.path[[i]])),collapse = '') }))
+    # if( toState == "END") lst.path <- unlist(lapply(1:length(str.path),function(i){ paste( c(str_trim(str.path[[i]]),"->END"),collapse = '') }))
+    
     kind.of.path <- table(str.path)
     numero.in.From <- sum(kind.of.path); numero.in.To <- sum(kind.of.path)
     
@@ -920,8 +933,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     ct <- 1
     arr.nuovi.nodi <- c(); arr.nuovi.archi <- c()
     for( i in 1:length(lst.path) ) {
-      # nodeColor <- "White"
-      
+
       stringa.sequenza <- paste( lst.path[[i]], collapse = "->" )
       
       numero.ricorrenze <- as.numeric(kind.of.path[which( names(kind.of.path) == stringa.sequenza)])
@@ -932,7 +944,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         if(length(second.ricorrenza)==0) second.ricorrenza <- 0
         first.totale <- sum(first.kind.of.path)
         second.totale <- sum(second.kind.of.path)
-        # browser()
+        
         piccolaM <- matrix(  c( first.ricorrenza , second.ricorrenza , (first.totale-first.ricorrenza) , (second.totale-second.ricorrenza) ), nrow=2 , byrow = T )
         p.value <- fisher.test(piccolaM)$p.value
         p.value <- format(p.value,digits = 3)
@@ -1085,9 +1097,44 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     script <- str_replace_all( script , "##str.nuovi.archi##", str.nuovi.archi )
     script <- str_replace_all( script , "##kindOfGraph##", kindOfGraph )
     
+    if( giveBackMatrix == TRUE ) {
+      script <- build.result.table.pathBeetweenStackedNodes( lst.path = lst.path , fromState = fromState , 
+                                                             toState = toState, stratifyFor = stratifyFor, 
+                                                             minPath = minPath, stratificationValues = stratificationValues, 
+                                                             fisher.threshold = fisher.threshold ) 
+    }
+    
     return(script)
   }
   
+  build.result.table.pathBeetweenStackedNodes <- function( lst.path , fromState , toState, stratifyFor, 
+                                                           minPath, stratificationValues, fisher.threshold) {
+    browser()
+    stringa.sequenza <- paste( lst.path[[i]], collapse = "->" )
+    
+    kind.of.path <- table(stringa.sequenza)
+    numero.in.From <- sum(kind.of.path); numero.in.To <- sum(kind.of.path)
+    
+    numero.ricorrenze <- as.numeric(kind.of.path[which( names(kind.of.path) == stringa.sequenza)])
+    if( stratify == TRUE ) {
+      first.ricorrenza <- as.numeric(first.kind.of.path[which( names(first.kind.of.path) == stringa.sequenza)])
+      second.ricorrenza <- as.numeric(second.kind.of.path[which( names(second.kind.of.path) == stringa.sequenza)])
+      if(length(first.ricorrenza)==0) first.ricorrenza <- 0
+      if(length(second.ricorrenza)==0) second.ricorrenza <- 0
+      first.totale <- sum(first.kind.of.path)
+      second.totale <- sum(second.kind.of.path)
+      
+      piccolaM <- matrix(  c( first.ricorrenza , second.ricorrenza , (first.totale-first.ricorrenza) , (second.totale-second.ricorrenza) ), nrow=2 , byrow = T )
+      p.value <- fisher.test(piccolaM)$p.value
+      p.value <- format(p.value,digits = 3)
+      
+      aaa <- ((sum(piccolaM[2,])*fisher.threshold))
+      bbb <-  sum(piccolaM[1,])
+      if( bbb > aaa ) Fisher.valido <- TRUE
+      else Fisher.valido <- FALSE
+    }
+    
+  }
   
   constructor <- function( verboseMode  ) {
     MM <<- matrix("",ncol=1, nrow=1)
