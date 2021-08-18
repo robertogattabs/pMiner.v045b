@@ -507,3 +507,102 @@ plotPatientReplayedTimelineFunction<-function( list.computation.matrix , patient
   }
   # list.computation.matrix
 } 
+
+#' A function to plot nice timeline
+#'
+#' @description  wow
+#' @export
+plotCohortTimeline <- function(  objDL.obj, lst.to.join=list() , lst.spike=list() , UM="days", y.grid = NA,
+                                   ordered = FALSE, decreasing = TRUE , y.grid.col = "lightgrey", x.grid.col = "lightgrey") {
+  
+  
+  # lst.to.join <- list( "Covid" = list( "from" ="Covid_BEGIN","to" = "Covid_END", "col"="red"), 
+  #                      "Rehabilitation" = list( "from" = "Rehabilitation_BEGIN" , "to" = "Rehabilitation_END", col = "green"), 
+  #                      "SubIntensive" = list( "from" = "SubIntensive_BEGIN" , "to" = "SubIntensive_END", col = "orange") 
+  # )
+  # lst.spike <- list( "Tested_Positive"=list( "col" = "blue", "lwd" = 2, "pch"= 8),
+  #                    "Discharge"=list( "col" = "blue", "lwd" = 1, "pch"= 25)
+  # )
+  # plot.cohort.timeline(objDL.obj = objDL.new.export,lst.to.join = lst.to.join, lst.spike = lst.spike,y.grid = 90,
+  #                      ordered = TRUE,decreasing = TRUE)
+  
+  
+  
+  objDL.new.export <- objDL.obj
+  y.step.each <- y.grid
+  
+  if( UM == "mins") conversion <- 1
+  if( UM == "hours") conversion <- 60
+  if( UM == "days") conversion <- 24*60
+  if( UM == "weeks") conversion <- 24*60*7
+  
+  
+  minThickness <- 10
+  internalMargin <- 2
+  numberOfPatient <- length(objDL.new.export$pat.process)
+  biggestTime <- max(do.call(rbind,objDL.new.export$pat.process)$pMineR.deltaDate)/conversion
+  if(is.na(y.step.each)) y.step.each <- as.integer(biggestTime/10)
+  
+  max.time.per.patient <- unlist(lapply(names(objDL.new.export$pat.process), function(ID) { max(objDL.new.export$pat.process[[ID]]$pMineR.deltaDate) } ))
+  
+  if(ordered == TRUE) {
+    ordered.patients <- order(max.time.per.patient,decreasing = !decreasing)
+  } else { 
+    ordered.patients <- 1:length(objDL.new.export$pat.process)
+  }
+  
+  arr.posizioni <- seq( 0, (numberOfPatient+1)* minThickness, by= ((numberOfPatient+1)* minThickness) / numberOfPatient)
+  arr.posizioni <- arr.posizioni[1:(length(arr.posizioni)-1)] + (minThickness/2)
+  
+  plot(0,0,xlim=c(0,biggestTime),ylim=c(0,(numberOfPatient+1)* minThickness ), axes=FALSE,xlab=UM, ylab="" , col="white")
+  abline( v = seq(0,biggestTime,by = y.step.each) ,lty = 2, col=y.grid.col )
+  
+  tmp.arr.from <- unlist(lapply(names(lst.to.join),function(i) { lst.to.join[[i]]$from } ))
+  tmp.arr.to <- unlist(lapply(names(lst.to.join),function(i) { lst.to.join[[i]]$to } ))
+  tmp.arr.col <- unlist(lapply(names(lst.to.join),function(i) { lst.to.join[[i]]$col } ))
+  arr.y.to.put.labels <- c()
+  cursore <- 1
+  tmp.1 <- lapply( ordered.patients, function( no.patient ) {
+    y.start <- (cursore * minThickness)+internalMargin ; y.stop <- ((cursore+1)*minThickness)-internalMargin
+    y.median <- (y.start + (y.stop-y.start)/2) 
+    arr.y.to.put.labels <<- c( arr.y.to.put.labels , y.median )
+    abline( h = y.median ,lty = 2, col=x.grid.col)
+    arr.righe.2.skip <- c()
+    tmp.2 <- lapply( 1:nrow(objDL.new.export$pat.process[[no.patient]]), function(riga) {
+
+      if( !riga %in% arr.righe.2.skip) {
+        arr.tutto <- objDL.new.export$pat.process[[no.patient]][[ objDL.new.export$csv.EVENTName ]]
+        current.event <- objDL.new.export$pat.process[[no.patient]][[ objDL.new.export$csv.EVENTName ]][riga]
+        browser()
+        quale <- which( tmp.arr.from == current.event )
+        if( length(quale)>0  ){
+          da.trovare <- tmp.arr.to[quale]
+          quale.to <- which(arr.tutto[(riga+1):length(arr.tutto)] == da.trovare)[1]
+          quale.to <- quale.to + riga
+          arr.righe.2.skip <- c( arr.righe.2.skip , quale.to )
+
+          x.from <- (objDL.new.export$pat.process[[no.patient]]$pMineR.deltaDate[riga]/conversion)
+          x.to <- (objDL.new.export$pat.process[[no.patient]]$pMineR.deltaDate[quale.to]/conversion)
+          
+          polygon( c(x.from , x.to, x.to , x.from , x.from  ),
+                   c(y.start  , y.start ,y.stop , y.stop , y.start), lwd=2, 
+                   col=tmp.arr.col[quale], border = NA)
+          
+        } else {
+          if( current.event %in% names(lst.spike)) {
+            
+            points( (objDL.new.export$pat.process[[no.patient]]$pMineR.deltaDate[riga]/conversion), (y.start + (y.stop - y.start)/2),
+                    col = lst.spike[[ current.event ]]$col, 
+                    pch = lst.spike[[ current.event ]]$pch,
+                    lwd = lst.spike[[ current.event ]]$lwd,
+            )    
+          }
+        }      
+      }
+    } )
+    cursore <<- cursore + 1
+  })
+  
+  axis(2, arr.y.to.put.labels, labels=names(objDL.new.export$pat.process),las=2)
+  axis(1, seq(0,biggestTime,by = y.step.each), labels=seq(0,biggestTime,by = y.step.each),las=1)
+}
