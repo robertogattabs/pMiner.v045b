@@ -573,7 +573,7 @@ plotCohortTimeline <- function(  objDL.obj, lst.to.join=list() , lst.spike=list(
       if( !riga %in% arr.righe.2.skip) {
         arr.tutto <- objDL.new.export$pat.process[[no.patient]][[ objDL.new.export$csv.EVENTName ]]
         current.event <- objDL.new.export$pat.process[[no.patient]][[ objDL.new.export$csv.EVENTName ]][riga]
-        browser()
+        # browser()
         quale <- which( tmp.arr.from == current.event )
         if( length(quale)>0  ){
           da.trovare <- tmp.arr.to[quale]

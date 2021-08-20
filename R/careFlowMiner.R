@@ -137,7 +137,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                             preserve.topology = FALSE, set.to.gray = FALSE, set.to.gray.color= "WhiteSmoke" , debug.it = FALSE,
                             show.far.leaf = FALSE, 
                             show.median.time.from.root = FALSE, heatmap.based.on.median.time = FALSE , 
-                            heatmap.base.color = "Khaki") {
+                            heatmap.base.color = "Khaki", abs.threshold = NA , nodeShape = "oval") {
     withPercentages <- TRUE; relative.percentages <- FALSE
     if( starting.ID != "root") {
       if( lst.nodi[[starting.ID]]$depth == depth | 
@@ -178,6 +178,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         sonLabel <- lst.nodi[[son]]$evento
         sonHits <- lst.nodi[[son]]$hits
         totaleSonHits <- totaleSonHits + sonHits
+        
+        if(!is.na(abs.threshold) & sonHits < abs.threshold) next;
         
         arc.fontsize <- "1"
         penwidth <- "1"
@@ -220,7 +222,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                             show.far.leaf = show.far.leaf,
                             show.median.time.from.root = show.median.time.from.root,
                             heatmap.based.on.median.time = heatmap.based.on.median.time,
-                            heatmap.base.color = heatmap.base.color
+                            heatmap.base.color = heatmap.base.color, 
+                            abs.threshold = abs.threshold , nodeShape = nodeShape
         )
         
         
@@ -256,7 +259,6 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
               stringa.tempi <- paste( c( "\n",min(tmp.tempi)," - ",median(tmp.tempi)," - ",max(tmp.tempi)  ), collapse = '')
               if( length(heatmap.based.on.median.time) > 0 ) {
                 arr.numeri.colore <- heatmap.based.on.median.time
-                # browser()
                 # if( str_to_lower(heatmap.base.color) == "grey") arr.numeri.colore <- as.integer(seq(min(heatmap.based.on.median.time),max(heatmap.based.on.median.time),by= (max(heatmap.based.on.median.time) - min(heatmap.based.on.median.time))/90))
                 paletteColorNumber <- which(c(arr.numeri.colore,Inf) - median(tmp.tempi) >= 0)[1]
                 fillColor <-  paste(c(heatmap.base.color,paletteColorNumber),collapse = '')
@@ -328,13 +330,14 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
       
     }
     
+    
     if( currentLevel == 0 ) {
       script <- "
           digraph boxes_and_circles {
             graph [overlap = false, fontsize = ##GraphFontsize##, layout = ##kindOfGraph##]
           
             # several 'node' statements
-            node [shape = oval, fontname = Helvetica , fontsize = 9]
+            node [shape = ##nodeShape##, fontname = Helvetica , fontsize = 9]
             ##NodesPlaceholder##
           
             # several 'edge' statements
@@ -347,27 +350,35 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
       script <- str_replace_all( script , "##ArcsPlaceholder##", ArcsPlaceholder )
       script <- str_replace_all( script , "##kindOfGraph##", kindOfGraph )
       script <- str_replace_all( script , "##GraphFontsize##", GraphFontsize )
+      script <- str_replace_all( script , "##nodeShape##", nodeShape )
     }
     if(  length(arrId2Jump) == 0 ) {
       if(lst.nodi[[starting.ID]]$evento == predictive.model.outcome) {
         num.outcome <- lst.nodi[[starting.ID]]$hits
       }
     }
-    return(list("arr.nodi"=arr.nodi,"arr.archi"=arr.archi, "script"=script,"num.outcome" = num.outcome, "sonHits"= totaleSonHits))
+    return(list( "arr.nodi"=arr.nodi,
+                 "arr.archi"=arr.archi, 
+                 "script"=script,
+                 "num.outcome" = num.outcome, 
+                 "sonHits"= totaleSonHits,
+                 "heatmap.based.on.median.time" = heatmap.based.on.median.time))
   }
   
   plotCFGraphComparison <- function( stratifyFor , stratificationValues, depth = 4, fisher.threshold = 0.1,
                                      checkDurationFromRoot = FALSE, 
                                      hitsMeansReachAGivenFinalState = FALSE, finalStateForHits = c(),
                                      arr.States.color=c("Deces"="Red","intensive care"="Orange","Recovered"="YellowGreen"), 
-                                     debug.it = F, show.far.leaf = FALSE ) {
+                                     debug.it = F, show.far.leaf = FALSE , abs.threshold = NA , kindOfGraph = "neato",
+                                     nodeShape = "oval") {
     
     # stratificationValues <- c(1,2)
     b <- plot.comparison( stratifyFor = stratifyFor, stratificationValues = stratificationValues, depth = depth,
                           fisher.threshold = fisher.threshold, checkDurationFromRoot = checkDurationFromRoot,
                           hitsMeansReachAGivenFinalState = hitsMeansReachAGivenFinalState, finalStateForHits = finalStateForHits,
                           arr.States.color=arr.States.color, set.to.gray = FALSE , set.to.gray.color= "WhiteSmoke",
-                          debug.it = debug.it, show.far.leaf = show.far.leaf)
+                          debug.it = debug.it, show.far.leaf = show.far.leaf, abs.threshold = abs.threshold,
+                          kindOfGraph = kindOfGraph, nodeShape = nodeShape)
     return(b)
   }
   compare.array <- function( a, b ) {
@@ -393,7 +404,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                                starting.ID = "root", sequenza =c("root") , currentLevel = 0, 
                                depth = 4, arr.States.color=c(), GraphFontsize = "9" ,
                                set.to.gray = FALSE , set.to.gray.color= "WhiteSmoke", 
-                               debug.it = F, show.far.leaf = FALSE) {
+                               debug.it = F, show.far.leaf = FALSE , abs.threshold = NA,
+                               kindOfGraph = "neato", nodeShape = "oval") {
     
     IDName <- loadedDataset$csv.IDName; EventName <- loadedDataset$csv.EVENTName
     decoded.seq <- sequenza[ which(sequenza!="root")]
@@ -453,6 +465,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         sonHits <- lst.nodi[[son]]$hits
         totaleSonHits <- totaleSonHits + sonHits
         
+        if(!is.na(abs.threshold) & sonHits < abs.threshold) next;
+        
         # percentuale <- as.integer((sonHits/totale)*100)
         # penwidth <- 5*(percentuale/100)+0.2
         
@@ -462,7 +476,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                                 checkDurationFromRoot = checkDurationFromRoot,
                                 hitsMeansReachAGivenFinalState = hitsMeansReachAGivenFinalState, finalStateForHits = finalStateForHits,
                                 depth = depth, arr.States.color = arr.States.color,
-                                set.to.gray = set.to.gray, show.far.leaf = show.far.leaf)
+                                set.to.gray = set.to.gray, show.far.leaf = show.far.leaf,
+                                abs.threshold = abs.threshold, kindOfGraph = kindOfGraph, nodeShape = nodeShape) 
         # browser()
         matriceFisher <- matrix( c(res$first.hits, res$first.missed , res$second.hits , res$second.missed), byrow = F, ncol=2 )
         wilcoxTest.p <- NA
@@ -480,9 +495,11 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         # if( son %in% c("0","1","9","37","2") ) browser()
         # cat("\n FT: ",sum(matriceFisher[1,])," - ", ((sum(matriceFisher[2,])*fisher.threshold)) )
         if(checkDurationFromRoot == FALSE) {
-          if( sum(matriceFisher[1,]) > ((sum(matriceFisher[2,])*fisher.threshold)) ) { 
+          # if( sum(matriceFisher[1,]) > ((sum(matriceFisher[2,])*fisher.threshold)) ) {
+          if( sum(matriceFisher)> 20 ) { 
+            
             # browser()
-            p.value <- format(fisher.test(matriceFisher)$p.value,digits = 3)
+            p.value <- as.numeric(format(fisher.test(matriceFisher)$p.value,digits = 3))
             fillColor <- "White"; 
             borderColor <- "Black"
             fontColor <- "Black"
@@ -542,7 +559,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             # res$second.hits <- morti.second
             
             p.value <- p.value.fisher
-            p.value <- format(p.value,digits = 3)
+            p.value <- as.numeric(format(p.value,digits = 3))
             
             if( p.value < 0.05) fillColor <- "Yellow";
             
@@ -613,7 +630,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             if(checkDurationFromRoot == FALSE) {
               if( sum(matriceFisher.leaf[1,]) > ((sum(matriceFisher.leaf[2,])*fisher.threshold)) ) { 
                 # browser()
-                p.value <- format(fisher.test(matriceFisher.leaf)$p.value,digits = 3)
+                p.value <- as.numeric(format(fisher.test(matriceFisher.leaf)$p.value,digits = 3))
                 
                 if( p.value < 0.05) fillColor <- "Yellow";
                 if( p.value < 0.01) fillColor <- "Yellow";
@@ -649,10 +666,10 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     if( currentLevel == 0 ) {
       script <- "
           digraph boxes_and_circles {
-            graph [overlap = false, fontsize = ##GraphFontsize##, layout = neato]
+            graph [overlap = false, fontsize = ##GraphFontsize##, layout = ##kindOfGraph##]
           
             # several 'node' statements
-            node [shape = oval, fontname = Helvetica , fontsize = 9]
+            node [shape = ##nodeShape##, fontname = Helvetica , fontsize = 9]
             ##NodesPlaceholder##
           
             # several 'edge' statements
@@ -664,6 +681,10 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
       script <- str_replace_all( script , "##NodesPlaceholder##", NodesPlaceholder )
       script <- str_replace_all( script , "##ArcsPlaceholder##", ArcsPlaceholder )
       script <- str_replace_all( script , "##GraphFontsize##", GraphFontsize )
+      script <- str_replace_all( script , "##kindOfGraph##", kindOfGraph )
+      script <- str_replace_all( script , "##nodeShape##", nodeShape )
+      
+      
     }
     # if(  length(arrId2Jump) == 0 ) {
     #   if(lst.nodi[[starting.ID]]$evento == predictive.model.outcome) {
@@ -782,7 +803,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         if(checkDurationFromRoot == FALSE) {
           if( sum(matriceFisher[1,]) > ((sum(matriceFisher[2,])*fisher.threshold)) ) { 
             # browser()
-            p.value <- format(fisher.test(matriceFisher)$p.value,digits = 3)
+            p.value <- as.numeric(format(fisher.test(matriceFisher)$p.value,digits = 3))
             fillColor <- "White"; 
             borderColor <- "Black"
             fontColor <- "Black"
@@ -971,7 +992,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         
         piccolaM <- matrix(  c( first.ricorrenza , second.ricorrenza , (first.totale-first.ricorrenza) , (second.totale-second.ricorrenza) ), nrow=2 , byrow = T )
         p.value <- fisher.test(piccolaM)$p.value
-        p.value <- format(p.value,digits = 3)
+        p.value <- as.numeric(format(p.value,digits = 3))
         
         aaa <- ((sum(piccolaM[2,])*fisher.threshold))
         bbb <-  sum(piccolaM[1,])
@@ -1150,7 +1171,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
       
       piccolaM <- matrix(  c( first.ricorrenza , second.ricorrenza , (first.totale-first.ricorrenza) , (second.totale-second.ricorrenza) ), nrow=2 , byrow = T )
       p.value <- fisher.test(piccolaM)$p.value
-      p.value <- format(p.value,digits = 3)
+      p.value <- as.numeric(format(p.value,digits = 3))
       
       aaa <- ((sum(piccolaM[2,])*fisher.threshold))
       bbb <-  sum(piccolaM[1,])
@@ -1640,7 +1661,7 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
         if(checkDurationFromRoot == FALSE) {
           if( sum(matriceFisher[1,]) > ((sum(matriceFisher[2,])*fisher.threshold)) ) { 
             # browser()
-            p.value <- format(fisher.test(matriceFisher)$p.value,digits = 3)
+            p.value <- as.numeric(format(fisher.test(matriceFisher)$p.value,digits = 3))
             fillColor <- "White"; 
             borderColor <- "Black"
             fontColor <- "Black"
@@ -1700,7 +1721,7 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
             # res$second.hits <- morti.second
             
             p.value <- p.value.fisher
-            p.value <- format(p.value,digits = 3)
+            p.value <- as.numeric(format(p.value,digits = 3))
 
             if( p.value < 0.05) fillColor <- "Yellow";
 
@@ -1771,7 +1792,7 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
             if(checkDurationFromRoot == FALSE) {
               if( sum(matriceFisher.leaf[1,]) > ((sum(matriceFisher.leaf[2,])*fisher.threshold)) ) { 
                 # browser()
-                p.value <- format(fisher.test(matriceFisher.leaf)$p.value,digits = 3)
+                p.value <- as.numeric(format(fisher.test(matriceFisher.leaf)$p.value,digits = 3))
                 
                 if( p.value < 0.05) fillColor <- "Yellow";
                 if( p.value < 0.01) fillColor <- "Yellow";
@@ -1940,7 +1961,7 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
         if(checkDurationFromRoot == FALSE) {
           if( sum(matriceFisher[1,]) > ((sum(matriceFisher[2,])*fisher.threshold)) ) { 
             # browser()
-            p.value <- format(fisher.test(matriceFisher)$p.value,digits = 3)
+            p.value <- as.numeric(format(fisher.test(matriceFisher)$p.value,digits = 3))
             fillColor <- "White"; 
             borderColor <- "Black"
             fontColor <- "Black"
@@ -2129,7 +2150,7 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
         
         piccolaM <- matrix(  c( first.ricorrenza , second.ricorrenza , (first.totale-first.ricorrenza) , (second.totale-second.ricorrenza) ), nrow=2 , byrow = T )
         p.value <- fisher.test(piccolaM)$p.value
-        p.value <- format(p.value,digits = 3)
+        p.value <- as.numeric(format(p.value,digits = 3))
         
         aaa <- ((sum(piccolaM[2,])*fisher.threshold))
         bbb <-  sum(piccolaM[1,])
@@ -2308,7 +2329,7 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
       
       piccolaM <- matrix(  c( first.ricorrenza , second.ricorrenza , (first.totale-first.ricorrenza) , (second.totale-second.ricorrenza) ), nrow=2 , byrow = T )
       p.value <- fisher.test(piccolaM)$p.value
-      p.value <- format(p.value,digits = 3)
+      p.value <- as.numeric(format(p.value,digits = 3))
       
       aaa <- ((sum(piccolaM[2,])*fisher.threshold))
       bbb <-  sum(piccolaM[1,])
