@@ -4,6 +4,7 @@
 #' @import progress
 #' @export
 
+
 careFlowMiner <- function( verbose.mode = FALSE ) {
   lst.nodi <- list()
   MM <- c()
@@ -370,7 +371,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                                      hitsMeansReachAGivenFinalState = FALSE, finalStateForHits = c(),
                                      arr.States.color=c("Deces"="Red","intensive care"="Orange","Recovered"="YellowGreen"), 
                                      debug.it = F, show.far.leaf = FALSE , abs.threshold = NA , kindOfGraph = "neato",
-                                     nodeShape = "oval") {
+                                     nodeShape = "oval" , UM = "days") {
     
     # stratificationValues <- c(1,2)
     b <- plot.comparison( stratifyFor = stratifyFor, stratificationValues = stratificationValues, depth = depth,
@@ -378,7 +379,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                           hitsMeansReachAGivenFinalState = hitsMeansReachAGivenFinalState, finalStateForHits = finalStateForHits,
                           arr.States.color=arr.States.color, set.to.gray = FALSE , set.to.gray.color= "WhiteSmoke",
                           debug.it = debug.it, show.far.leaf = show.far.leaf, abs.threshold = abs.threshold,
-                          kindOfGraph = kindOfGraph, nodeShape = nodeShape)
+                          kindOfGraph = kindOfGraph, nodeShape = nodeShape, UM = UM)
     return(b)
   }
   compare.array <- function( a, b ) {
@@ -405,7 +406,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                                depth = 4, arr.States.color=c(), GraphFontsize = "9" ,
                                set.to.gray = FALSE , set.to.gray.color= "WhiteSmoke", 
                                debug.it = F, show.far.leaf = FALSE , abs.threshold = NA,
-                               kindOfGraph = "neato", nodeShape = "oval") {
+                               kindOfGraph = "neato", nodeShape = "oval", UM = "days") {
     
     IDName <- loadedDataset$csv.IDName; EventName <- loadedDataset$csv.EVENTName
     decoded.seq <- sequenza[ which(sequenza!="root")]
@@ -445,6 +446,12 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     arcColor <- "Black"
     penwidth <- 0.5
     arc.fontsize <- 10
+    if( UM == "minutes") divisore <- 60 
+    if( UM == "hours") divisore <- 60 
+    if( UM == "days") divisore <- 60 * 24
+    if( UM == "weeks") divisore <- 60 * 24 * 7
+    if( UM == "months") divisore <- 60 * 24 * 30
+    if( UM == "years") divisore <- 60 * 24 * 365
     if( set.to.gray == TRUE) { fillColor <- set.to.gray.color;  }
     
     if( currentLevel == 0) {
@@ -477,14 +484,14 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                                 hitsMeansReachAGivenFinalState = hitsMeansReachAGivenFinalState, finalStateForHits = finalStateForHits,
                                 depth = depth, arr.States.color = arr.States.color,
                                 set.to.gray = set.to.gray, show.far.leaf = show.far.leaf,
-                                abs.threshold = abs.threshold, kindOfGraph = kindOfGraph, nodeShape = nodeShape) 
+                                abs.threshold = abs.threshold, kindOfGraph = kindOfGraph, nodeShape = nodeShape, UM = UM) 
         # browser()
         matriceFisher <- matrix( c(res$first.hits, res$first.missed , res$second.hits , res$second.missed), byrow = F, ncol=2 )
         wilcoxTest.p <- NA
         if(checkDurationFromRoot == TRUE) {
           if( length(res$first.ID) > 0 & length(res$second.ID) > 0 & starting.ID!="root") {
-            wilcoxTest.p <- suppressWarnings(wilcox.test( unlist(lapply( res$first.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })),
-                                                          unlist(lapply( res$second.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })))$p.value)
+            wilcoxTest.p <- suppressWarnings(wilcox.test( unlist(lapply( res$first.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })) / divisore,
+                                                          unlist(lapply( res$second.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })) / divisore)$p.value)
             wilcoxTest.p <- as.numeric(format(wilcoxTest.p, digits = 3))
           } else {
             wilcoxTest.p <- 1
@@ -580,8 +587,9 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         } else {
           a <- unlist(lapply( res$first.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) }))
           b <- unlist(lapply( res$second.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) }))
-          a <- as.integer(mean(a)/(60*24))
-          b <- as.integer(mean(b)/(60*24))
+          
+          a <- as.integer(mean(a)/divisore)
+          b <- as.integer(mean(b)/divisore)
           riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n",a,"/",b,"\n p = ",p.value,"' ,  fontcolor = ",fontColor,", color = ",borderColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )
           riga.archi <- paste( c("'",starting.ID,"'->'",son,"' [label='",arcLabel,"', color = ",arcColor,", penwidth = ",penwidth,", arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
           

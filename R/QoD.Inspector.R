@@ -183,10 +183,10 @@ QoDInspector <- function( UM = "" ) {
     
     # str_extract_all(string = "('a' -> 'b' & 'c' -> 'ggui') | 'dfds' -> 'dfs' ",pattern = "[ ']*[a-zA-Z_ ]+[ ']*(->)[ ']*[a-zA-Z_ ]+[ ']*")
     
-    rules <- c( "->" = "[ ']*[a-zA-Z_ ]+[']*(->)[ ']*[a-zA-Z_ ]+[']*",
-                "-->" = "[ ']*[a-zA-Z_ ]+[']*(-->)[ ']*[a-zA-Z_ ]+[']*",
-                "-X" = "[ ']*[a-zA-Z_ ]+[']*(-X)[ ']*[a-zA-Z_ ]+[']*",
-                "--X" = "[ ']*[a-zA-Z_ ]+[']*(--X)[ ']*[a-zA-Z_ ]+[']*"
+    rules <- c( "->" = "[ ']*[0-9a-zA-Z_ ]+[']*(->)[ ']*[0-9a-zA-Z_ ]+[']*",
+                "-->" = "[ ']*[0-9a-zA-Z_ ]+[']*(-->)[ ']*[0-9a-zA-Z_ ]+[']*",
+                "-X" = "[ ']*[0-9a-zA-Z_ ]+[']*(-X)[ ']*[0-9a-zA-Z_ ]+[']*",
+                "--X" = "[ ']*[0-9a-zA-Z_ ]+[']*(--X)[ ']*[0-9a-zA-Z_ ]+[']*"
     )
     # browser()
     kkk <- unlist(lapply( 1:length(rules), function(i) { 
@@ -366,11 +366,12 @@ QoDInspector <- function( UM = "" ) {
   }
   strParser.all <- function( ID , query , evt.sequence ) {
     
-    rules <- c( "->" = "[ ']*[a-zA-Z_ ]+[ ']*(->)[ ']*[a-zA-Z_ ]+[ ']*",
-                "-->" = "[ ']*[a-zA-Z_ ]+[ ']*(-->)[ ']*[a-zA-Z_ ]+[ ']*"
+    rules <- c( "->" = "[ ']*[0-9a-zA-Z_ ]+[ ']*(->)[ ']*[0-9a-zA-Z_ ]+[ ']*",
+                "-->" = "[ ']*[0-9a-zA-Z_ ]+[ ']*(-->)[ ']*[0-9a-zA-Z_ ]+[ ']*"
     )
 
     # Estrai i pezzi che soddisfano la regexp
+    # browser()
     stringa <- query
     kkk <- unlist(lapply( 1:length(rules), function(i) { 
       ret <- c()
@@ -410,6 +411,7 @@ QoDInspector <- function( UM = "" ) {
     no <- c()
     detail <- list()
     for( ID in arr.ID ) {
+      # browser()
       evt.sequence <- global.dataLoader$pat.process[[ID]][[global.dataLoader$csv.EVENTName]]
       res <- strParser.all( ID, query , evt.sequence = evt.sequence )
       # browser()

@@ -535,6 +535,7 @@ plotCohortTimeline <- function(  objDL.obj, lst.to.join=list() , lst.spike=list(
   if( UM == "hours") conversion <- 60
   if( UM == "days") conversion <- 24*60
   if( UM == "weeks") conversion <- 24*60*7
+  if( UM == "months") conversion <- 24*60*7*4
   
   
   minThickness <- 10
