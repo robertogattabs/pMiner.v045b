@@ -131,7 +131,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
   # ---------------------------------------------------------------   
   plotCFGraph <- function(  depth= 2 , starting.ID = "root", currentLevel = 0, total.hits = 0,
                             kindOfGraph = "twopi", GraphFontsize = "9" , 
-                            # withPercentages = TRUE, relative.percentages = FALSE, 
+                            # withPercentages = TRUE, 
+                            relative.percentages = FALSE, 
                             proportionalPenwidth=TRUE , default.arcColor = "Black",
                             arr.States.color=c(),
                             predictive.model = FALSE, predictive.model.outcome = "", predictive.model.skipNodeLabel = c(),
@@ -139,7 +140,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                             show.far.leaf = FALSE, 
                             show.median.time.from.root = FALSE, heatmap.based.on.median.time = FALSE , 
                             heatmap.base.color = "Khaki", abs.threshold = NA , nodeShape = "oval") {
-    withPercentages <- TRUE; relative.percentages <- FALSE
+    withPercentages <- TRUE; 
+    # relative.percentages <- FALSE
     if( starting.ID != "root") {
       if( lst.nodi[[starting.ID]]$depth == depth | 
           ( predictive.model==TRUE & lst.nodi[[starting.ID]]$evento == predictive.model.outcome & preserve.topology == FALSE  ) ) {
@@ -221,6 +223,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                             preserve.topology = preserve.topology, set.to.gray = set.to.gray,
                             set.to.gray.color = set.to.gray.color , debug.it = debug.it,
                             show.far.leaf = show.far.leaf,
+                            relative.percentages = relative.percentages,
                             show.median.time.from.root = show.median.time.from.root,
                             heatmap.based.on.median.time = heatmap.based.on.median.time,
                             heatmap.base.color = heatmap.base.color, 
@@ -595,6 +598,9 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
           
         }
         
+        # -RG
+        # browser()
+        
         if( show.far.leaf & (lst.nodi[[son]]$depth == depth ) &
             ( hitsMeansReachAGivenFinalState == FALSE ) &
             ( checkDurationFromRoot == FALSE )) {
@@ -631,7 +637,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             } else {
               quanti.second <- 0
             }
-            
+            # -RG
+            # browser()
             matriceFisher.leaf <- matrix( c(quanti.first, res$first.missed , quanti.second , res$second.missed), byrow = F, ncol=2 )
             p.value <- "NA"
             fillColor <- "White";
