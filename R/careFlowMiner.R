@@ -561,7 +561,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         
         if(checkDurationFromRoot == FALSE) {
           if( hitsMeansReachAGivenFinalState == TRUE ) {
-            # if( son == "22") browser()
+            # browser()
             fillColor <- "White";
             
             morti.first <- sum(unlist(lapply( res$first.ID , function(IPP) {
@@ -572,7 +572,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             })))            
             totali.first <- length(res$first.ID)
             totali.second <- length(res$second.ID) 
-            bbb <- matrix( c(morti.first, (totali.first-totali.first), morti.second , (totali.second-morti.second) ), nrow=2)
+            # bbb <- matrix( c(morti.first, (totali.first-totali.first), morti.second , (totali.second-morti.second) ), nrow=2)
+            bbb <- matrix( c( (totali.first-morti.first),morti.first, (totali.second-morti.second),morti.second  ), nrow=2)
             p.value.fisher <- fisher.test(bbb)$p.value
             
             res$first.hits <- as.numeric(format(morti.first / totali.first,digits = 2))
