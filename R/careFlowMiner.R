@@ -182,7 +182,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         sonHits <- lst.nodi[[son]]$hits
         totaleSonHits <- totaleSonHits + sonHits
         
-        if(!is.na(abs.threshold) & sonHits < abs.threshold) next;
+        # if(!is.na(abs.threshold) & sonHits < abs.threshold) next;
         
         arc.fontsize <- "1"
         penwidth <- "1"
@@ -311,17 +311,28 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                 }
               }
               
-              tmp.str <- paste( c("'",son,"'->'",names(tabella.ultimi)[i],"' [style='dashed', label='', color = '",colore.arco <- "grey","', penwidth = 0.8, arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
-              arr.archi <- c( arr.archi , tmp.str)
-              # browser()
-              tmp.str <- paste( c("'",names(tabella.ultimi)[i],"' [ label='",names(table(arr.ultimi))[i],"\n(",tabella.ultimi[i],"/",res$sonHits,")' , color='",colore.nodo,"', fillcolor = '",fillColor,"' , style = filled]"),collapse = "" )
-              arr.nodi <- c( arr.nodi , tmp.str )
+              tmp.str.arco <- paste( c("'",son,"'->'",names(tabella.ultimi)[i],"' [style='dashed', label='', color = '",colore.arco <- "grey","', penwidth = 0.8, arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
+              tmp.str.nodo <- paste( c("'",names(tabella.ultimi)[i],"' [ label='",names(table(arr.ultimi))[i],"\n(",tabella.ultimi[i],"/",res$sonHits,")' , color='",colore.nodo,"', fillcolor = '",fillColor,"' , style = filled]"),collapse = "" )
+              # -im RG  
+              if(is.na(abs.threshold) | sonHits >= abs.threshold) {
+                arr.archi <- c( arr.archi , tmp.str.arco)
+                arr.nodi <- c( arr.nodi , tmp.str.nodo )
+              }
+              # arr.archi <- c( arr.archi , tmp.str.arco)
+              # arr.nodi <- c( arr.nodi , tmp.str.nodo )
+              # -fm RG  
             }
           }
         }
         
-        arr.nodi <- c( arr.nodi , riga.nodi )
-        arr.archi <- c( arr.archi , riga.archi)
+        # -im RG          
+        if(is.na(abs.threshold) | sonHits >= abs.threshold) {
+          arr.nodi <- c( arr.nodi , riga.nodi )
+          arr.archi <- c( arr.archi , riga.archi)
+        }
+        # arr.nodi <- c( arr.nodi , riga.nodi )
+        # arr.archi <- c( arr.archi , riga.archi)
+        # -fm RG
         
         if( res$num.outcome > 0 ) num.outcome <- num.outcome +  res$num.outcome
         altri.nodi <- res$arr.nodi
@@ -435,8 +446,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
       return(list("stringa.nodi"=c(),"stringa.archi"=c(),"script"="", "sonHits" = lst.nodi[[starting.ID]]$hits,
                   "first.hits" = quanti.first, "second.hits" = quanti.second ,
                   "first.ID" = validi.first.ID, "second.ID" = validi.second.ID, 
-                  "first.missed"= (length(first.ID)-length(quanti.first)), 
-                  "second.missed"=(length(second.ID)-length(quanti.second))
+                  "first.missed"= (length(first.ID)-quanti.first), 
+                  "second.missed"=(length(second.ID)-quanti.second)
       ))
     }
     
@@ -476,6 +487,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         totaleSonHits <- totaleSonHits + sonHits
         
         if(!is.na(abs.threshold) & sonHits < abs.threshold) next;
+        
+        # if( currentLevel == 1) browser()
         
         # percentuale <- as.integer((sonHits/totale)*100)
         # penwidth <- 5*(percentuale/100)+0.2
@@ -559,7 +572,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             })))            
             totali.first <- length(res$first.ID)
             totali.second <- length(res$second.ID) 
-            bbb <- matrix( c(morti.first, totali.first, morti.second , totali.second ), nrow=2)
+            bbb <- matrix( c(morti.first, (totali.first-totali.first), morti.second , (totali.second-morti.second) ), nrow=2)
             p.value.fisher <- fisher.test(bbb)$p.value
             
             res$first.hits <- as.numeric(format(morti.first / totali.first,digits = 2))
@@ -638,7 +651,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
               quanti.second <- 0
             }
             # -RG
-            # browser()
+            cat("\n verificare la seguente matrice x il Fisher")
+            browser()
             matriceFisher.leaf <- matrix( c(quanti.first, res$first.missed , quanti.second , res$second.missed), byrow = F, ncol=2 )
             p.value <- "NA"
             fillColor <- "White";
@@ -720,7 +734,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     # browser()
     return(list("arr.nodi"=arr.nodi,"arr.archi"=arr.archi, "script"=script,"num.outcome" = num.outcome, 
                 "first.hits" = quanti.first, "second.hits" = quanti.second ,
-                "first.missed"= (length(first.ID)-length(quanti.first)), "second.missed"=(length(second.ID)-length(quanti.second)),
+                "first.missed"= (length(first.ID)-quanti.first), "second.missed"=(length(second.ID)-quanti.second),
                 "first.ID" = validi.first.ID, "second.ID" = validi.second.ID,  
                 "sonHits"= totaleSonHits))
   }
@@ -799,7 +813,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                                 checkDurationFromRoot = checkDurationFromRoot,
                                 depth = depth, arr.States.color = arr.States.color,
                                 set.to.gray = set.to.gray)
-        # browser()
+        browser()
         matriceFisher <- matrix( c(res$first.hits, res$first.missed , res$second.hits , res$second.missed), byrow = F, ncol=2 )
         wilcoxTest.p <- NA
         if(checkDurationFromRoot == TRUE) {
@@ -1347,13 +1361,13 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
   # retrieve the data structure
   # ---------------------------------------------------------------   
   plotCFGraph <- function(  depth= 2 , starting.ID = "root", currentLevel = 0, total.hits = 0,
-                        kindOfGraph = "twopi", GraphFontsize = "9" , 
-                        # withPercentages = TRUE, relative.percentages = FALSE, 
-                        proportionalPenwidth=TRUE , default.arcColor = "Black",
-                        arr.States.color=c(),
-                        predictive.model = FALSE, predictive.model.outcome = "", predictive.model.skipNodeLabel = c(),
-                        preserve.topology = FALSE, set.to.gray = FALSE, set.to.gray.color= "WhiteSmoke" , debug.it = FALSE,
-                        show.far.leaf = FALSE) {
+                            kindOfGraph = "twopi", GraphFontsize = "9" , 
+                            # withPercentages = TRUE, relative.percentages = FALSE, 
+                            proportionalPenwidth=TRUE , default.arcColor = "Black",
+                            arr.States.color=c(),
+                            predictive.model = FALSE, predictive.model.outcome = "", predictive.model.skipNodeLabel = c(),
+                            preserve.topology = FALSE, set.to.gray = FALSE, set.to.gray.color= "WhiteSmoke" , debug.it = FALSE,
+                            show.far.leaf = FALSE) {
     withPercentages <- TRUE; relative.percentages <- FALSE
     if( starting.ID != "root") {
       if( lst.nodi[[starting.ID]]$depth == depth | 
@@ -1428,12 +1442,12 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
         if(debug.it==TRUE) browser()
         # if( lst.nodi[[son]]$evento == predictive.model.outcome ) browser()
         res <- plotCFGraph( depth = depth , starting.ID = son , currentLevel = currentLevel + 1, total.hits = total.hits,
-                        default.arcColor = default.arcColor, arr.States.color = arr.States.color,
-                        predictive.model = predictive.model, predictive.model.outcome = predictive.model.outcome, 
-                        predictive.model.skipNodeLabel = predictive.model.skipNodeLabel,
-                        preserve.topology = preserve.topology, set.to.gray = set.to.gray,
-                        set.to.gray.color = set.to.gray.color , debug.it = debug.it,
-                        show.far.leaf = show.far.leaf)
+                            default.arcColor = default.arcColor, arr.States.color = arr.States.color,
+                            predictive.model = predictive.model, predictive.model.outcome = predictive.model.outcome, 
+                            predictive.model.skipNodeLabel = predictive.model.skipNodeLabel,
+                            preserve.topology = preserve.topology, set.to.gray = set.to.gray,
+                            set.to.gray.color = set.to.gray.color , debug.it = debug.it,
+                            show.far.leaf = show.far.leaf)
         
         
         # nodo.partenza <- lst.nodi[[starting.ID]]$depth + 1
@@ -1473,7 +1487,7 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
           }
           riga.archi <- paste( c("'",starting.ID,"'->'",son,"' [label='",arcLabel,"', color = ",arcColor,", penwidth = ",penwidth,", arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
         }
-
+        
         if( show.far.leaf & (lst.nodi[[son]]$depth == depth) & (lst.nodi[[son]]$evento != predictive.model.outcome) ) {
           arr.ultimi <- unlist(lapply( lst.nodi[[son]]$IPP, function(IPP) {
             return(tail(loadedDataset$pat.process[[IPP]][[ loadedDataset$csv.EVENTName ]],n=1))
@@ -1553,8 +1567,8 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
   plotCFGraphComparison <- function( stratifyFor , stratificationValues, depth = 4, fisher.threshold = 0.1,
                                      checkDurationFromRoot = FALSE, 
                                      hitsMeansReachAGivenFinalState = FALSE, finalStateForHits = c(),
-                               arr.States.color=c("Deces"="Red","intensive care"="Orange","Recovered"="YellowGreen"), 
-                               debug.it = F, show.far.leaf = FALSE ) {
+                                     arr.States.color=c("Deces"="Red","intensive care"="Orange","Recovered"="YellowGreen"), 
+                                     debug.it = F, show.far.leaf = FALSE ) {
     
     # stratificationValues <- c(1,2)
     b <- plot.comparison( stratifyFor = stratifyFor, stratificationValues = stratificationValues, depth = depth,
@@ -1712,7 +1726,7 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
             arcColor <- "Gray"
           }
         }
-
+        
         if(checkDurationFromRoot == FALSE) {
           if( hitsMeansReachAGivenFinalState == TRUE ) {
             # if( son == "22") browser()
@@ -1726,20 +1740,20 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
             })))            
             totali.first <- length(res$first.ID)
             totali.second <- length(res$second.ID) 
-            bbb <- matrix( c(morti.first, totali.first, morti.second , totali.second ), nrow=2)
+            bbb <- matrix( c(morti.first, (totali.first-morti.first), morti.second , (totali.second-morti.second) ), nrow=2)
             p.value.fisher <- fisher.test(bbb)$p.value
-
+            
             res$first.hits <- as.numeric(format(morti.first / totali.first,digits = 2))
             res$second.hits <- as.numeric(format(morti.second / totali.second,digits = 2))
-
+            
             # res$first.hits <- morti.first
             # res$second.hits <- morti.second
             
             p.value <- p.value.fisher
             p.value <- as.numeric(format(p.value,digits = 3))
-
+            
             if( p.value < 0.05) fillColor <- "Yellow";
-
+            
             if( (morti.first + morti.second) < 10  ) {
               p.value = "NA"
               set.to.gray <- TRUE;
@@ -1747,7 +1761,7 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
               borderColor <- "Gray"
               fontColor <- "Gray"
               arcColor <- "Gray"
-           }
+            }
             
           }
           
@@ -1785,11 +1799,11 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
           
           tabella.ultimi.first <- table(arr.ultimi.first)
           tabella.ultimi.second <- table(arr.ultimi.second)
-        
+          
           arr.possibili.stati <- unique( c( names(tabella.ultimi.first),names(tabella.ultimi.second) ))
           
           for(i in 1:length(arr.possibili.stati)) {
-
+            
             if(  arr.possibili.stati[i] %in% names(tabella.ultimi.first) ) {
               quanti.first <- tabella.ultimi.first[ arr.possibili.stati[i] ]
             } else {
@@ -1826,7 +1840,7 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
           }
           
         }        
-
+        
         arr.nodi <- c( arr.nodi , riga.nodi )
         arr.archi <- c( arr.archi , riga.archi)
         
@@ -1884,11 +1898,11 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
   }
   # The OLD ONE
   old.plot.comparison <- function( stratifyFor, stratificationValues, 
-                               fisher.threshold = 0.1, checkDurationFromRoot = FALSE,
-                               starting.ID = "root", sequenza =c("root") , currentLevel = 0, 
-                               depth = 4, arr.States.color=c(), GraphFontsize = "9" ,
-                               set.to.gray = FALSE , set.to.gray.color= "WhiteSmoke", 
-                               debug.it = F) {
+                                   fisher.threshold = 0.1, checkDurationFromRoot = FALSE,
+                                   starting.ID = "root", sequenza =c("root") , currentLevel = 0, 
+                                   depth = 4, arr.States.color=c(), GraphFontsize = "9" ,
+                                   set.to.gray = FALSE , set.to.gray.color= "WhiteSmoke", 
+                                   debug.it = F) {
     
     IDName <- loadedDataset$csv.IDName; EventName <- loadedDataset$csv.EVENTName
     decoded.seq <- sequenza[ which(sequenza!="root")]
@@ -2151,7 +2165,7 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
     ct <- 1
     arr.nuovi.nodi <- c(); arr.nuovi.archi <- c()
     for( i in 1:length(lst.path) ) {
-
+      
       stringa.sequenza <- paste( lst.path[[i]], collapse = "->" )
       
       numero.ricorrenze <- as.numeric(kind.of.path[which( names(kind.of.path) == stringa.sequenza)])
