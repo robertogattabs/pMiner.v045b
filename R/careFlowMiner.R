@@ -558,7 +558,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             arcColor <- "Gray"
           }
         }
-        
+        Stringa.Totali.Originali<-""
         if(checkDurationFromRoot == FALSE) {
           if( hitsMeansReachAGivenFinalState == TRUE ) {
             # browser()
@@ -579,8 +579,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             res$first.hits <- as.numeric(format(morti.first / totali.first,digits = 2))
             res$second.hits <- as.numeric(format(morti.second / totali.second,digits = 2))
             
-            # res$first.hits <- morti.first
-            # res$second.hits <- morti.second
+            Stringa.Totali.Originali <- paste(c("\n",morti.first,"/",totali.first," vs ",morti.second,"/",totali.second),collapse = '')
             
             p.value <- p.value.fisher
             p.value <- as.numeric(format(p.value,digits = 3))
@@ -599,7 +598,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
           }
           
           ratio.hits <- format( (res$first.hits / res$second.hits) , digits = 2)
-          riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n",res$first.hits,"/",res$second.hits,"(",ratio.hits,")","\n p = ",p.value,"' ,  fontcolor = ",fontColor,", color = ",borderColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )
+          riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,Stringa.Totali.Originali,"\n",res$first.hits,"/",res$second.hits,"(",ratio.hits,")","\n p = ",p.value,"' ,  fontcolor = ",fontColor,", color = ",borderColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )
           riga.archi <- paste( c("'",starting.ID,"'->'",son,"' [label='",arcLabel,"', color = ",arcColor,", penwidth = ",penwidth,", arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
         } else {
           a <- unlist(lapply( res$first.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) }))
@@ -607,7 +606,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
           
           a <- as.integer(mean(a)/divisore)
           b <- as.integer(mean(b)/divisore)
-          riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n",a,"/",b,"\n p = ",p.value,"' ,  fontcolor = ",fontColor,", color = ",borderColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )
+          riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n mdn:",a," vs ",b,"\n p = ",p.value,"' ,  fontcolor = ",fontColor,", color = ",borderColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )
           riga.archi <- paste( c("'",starting.ID,"'->'",son,"' [label='",arcLabel,"', color = ",arcColor,", penwidth = ",penwidth,", arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
           
         }
