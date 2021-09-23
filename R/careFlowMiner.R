@@ -653,7 +653,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             }
             # -RG
             cat("\n verificare la seguente matrice x il Fisher")
-            browser()
+            # browser()
             matriceFisher.leaf <- matrix( c(quanti.first, res$first.missed , quanti.second , res$second.missed), byrow = F, ncol=2 )
             p.value <- "NA"
             fillColor <- "White";
