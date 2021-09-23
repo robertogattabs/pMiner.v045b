@@ -576,10 +576,15 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             bbb <- matrix( c( (totali.first-morti.first),morti.first, (totali.second-morti.second),morti.second  ), nrow=2)
             p.value.fisher <- fisher.test(bbb)$p.value
             
-            res$first.hits <- as.numeric(format(morti.first / totali.first,digits = 2))
-            res$second.hits <- as.numeric(format(morti.second / totali.second,digits = 2))
+            # -im RG
+            # res$first.hits <- as.numeric(format(morti.first / totali.first,digits = 2))
+            # res$second.hits <- as.numeric(format(morti.second / totali.second,digits = 2))
+            tmp.res.first.hits <- as.numeric(format(morti.first / totali.first,digits = 2))
+            tmp.res.second.hits <- as.numeric(format(morti.second / totali.second,digits = 2))
             
-            Stringa.Totali.Originali <- paste(c("\n",morti.first,"/",totali.first," vs ",morti.second,"/",totali.second),collapse = '')
+            # -fm RG
+            
+            # Stringa.Totali.Originali <- paste(c("\n",morti.first,"/",totali.first," vs ",morti.second,"/",totali.second),collapse = '')
             
             p.value <- p.value.fisher
             p.value <- as.numeric(format(p.value,digits = 3))
@@ -594,11 +599,27 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
               fontColor <- "Gray"
               arcColor <- "Gray"
             }
+            ratio.hits <- format( (tmp.res.first.hits / tmp.res.second.hits) , digits = 2)
+            Stringa.Totali.Originali <- paste(c("\n",morti.first,"/",totali.first," vs ",morti.second,"/",totali.second),collapse = '')
+            Stringa.sotto <- paste(c("\n",tmp.res.first.hits,"/",tmp.res.second.hits,"(ratio ",ratio.hits,")","\n p = ",p.value),collapse = '')
             
+          } else {
+            # -im RG
+            # browser()
+            totali.first <- res$first.missed + res$first.hits
+            totali.second <- res$second.missed + res$second.hits             
+            ratio.hits <- format( (res$first.hits / res$second.hits) , digits = 2)
+            Stringa.Totali.Originali <- paste(c("\n",res$first.hits,"/",totali.first," vs ",res$second.hits,"/",totali.second),collapse = '')
+            Stringa.sotto <- paste(c("\n","(ratio ",ratio.hits,")","\n p = ",p.value),collapse = '')
+            # -fm RG
           }
           
-          ratio.hits <- format( (res$first.hits / res$second.hits) , digits = 2)
-          riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,Stringa.Totali.Originali,"\n",res$first.hits,"/",res$second.hits,"(",ratio.hits,")","\n p = ",p.value,"' ,  fontcolor = ",fontColor,", color = ",borderColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )
+          
+          # -im RG
+          # ratio.hits <- format( (res$first.hits / res$second.hits) , digits = 2)
+          # riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,Stringa.Totali.Originali,"\n",res$first.hits,"/",res$second.hits,"(",ratio.hits,")","\n p = ",p.value,"' ,  fontcolor = ",fontColor,", color = ",borderColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )
+          riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,Stringa.Totali.Originali,Stringa.sotto,"' ,  fontcolor = ",fontColor,", color = ",borderColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )
+          # -fm RG
           riga.archi <- paste( c("'",starting.ID,"'->'",son,"' [label='",arcLabel,"', color = ",arcColor,", penwidth = ",penwidth,", arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
         } else {
           a <- unlist(lapply( res$first.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) }))
