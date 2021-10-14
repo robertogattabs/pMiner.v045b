@@ -126,21 +126,27 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
            "mtr.res"=mtr.res)
     )
   }
+
   # ---------------------------------------------------------------
   # retrieve the data structure
   # ---------------------------------------------------------------   
   plotCFGraph <- function(  depth= 2 , starting.ID = "root", currentLevel = 0, total.hits = 0,
                             kindOfGraph = "twopi", GraphFontsize = "9" , 
-                            # withPercentages = TRUE, 
+                            withPercentages = TRUE,
                             relative.percentages = FALSE, 
                             proportionalPenwidth=TRUE , default.arcColor = "Black",
                             arr.States.color=c(),
                             predictive.model = FALSE, predictive.model.outcome = "", predictive.model.skipNodeLabel = c(),
+                            predictive.model.engine.type = "default", predictive.model.engine.parameter = list(),
                             preserve.topology = FALSE, set.to.gray = FALSE, set.to.gray.color= "WhiteSmoke" , debug.it = FALSE,
                             show.far.leaf = FALSE, 
                             show.median.time.from.root = FALSE, heatmap.based.on.median.time = FALSE , 
                             heatmap.base.color = "Khaki", abs.threshold = NA , nodeShape = "oval") {
-    withPercentages <- TRUE; 
+    # withPercentages <- TRUE; 
+    if( predictive.model.engine.type != "default" ) {
+      predictive.model <- TRUE;
+      predictive.model.outcome <- predictive.model.engine.parameter$outcome$eventName[1]
+    }
     # relative.percentages <- FALSE
     if( starting.ID != "root") {
       if( lst.nodi[[starting.ID]]$depth == depth | 
@@ -173,6 +179,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     num.outcome <- 0
     totaleSonHits <- 0
     totale <- lst.nodi[[starting.ID]]$hits
+    totale <- length(lst.nodi[[starting.ID]]$IPP)
     if( length(arrId2Jump) > 0 ) {
       totale <- sum(unlist(lapply( arrId2Jump, function(x) {lst.nodi[[x]]$hits} )))
       num.outcome <- 0
@@ -219,10 +226,13 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         res <- plotCFGraph( depth = depth , starting.ID = son , currentLevel = currentLevel + 1, total.hits = total.hits,
                             default.arcColor = default.arcColor, arr.States.color = arr.States.color,
                             predictive.model = predictive.model, predictive.model.outcome = predictive.model.outcome, 
+                            predictive.model.engine.type = predictive.model.engine.type,
+                            predictive.model.engine.parameter = predictive.model.engine.parameter,
                             predictive.model.skipNodeLabel = predictive.model.skipNodeLabel,
                             preserve.topology = preserve.topology, set.to.gray = set.to.gray,
                             set.to.gray.color = set.to.gray.color , debug.it = debug.it,
                             show.far.leaf = show.far.leaf,
+                            withPercentages = withPercentages,
                             relative.percentages = relative.percentages,
                             show.median.time.from.root = show.median.time.from.root,
                             heatmap.based.on.median.time = heatmap.based.on.median.time,
@@ -273,17 +283,48 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
           riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",sonHits,")",stringa.tempi,"' ,  fillcolor = '",fillColor,"' , style = filled]"),collapse = "" )
           riga.archi <- paste( c("'",starting.ID,"'->'",son,"' [label='",arcLabel,"', color = ",arcColor,", penwidth = ",penwidth,", arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
         } else{
-          if(sonLabel %in% predictive.model.skipNodeLabel) {
-            totale.outcome <- res$num.outcome
-            totale.outcome <- quanti.eventi.finali
-            riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",totale.outcome,")' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )
-          } else {
-            totale.outcome <- res$num.outcome
-            totale.outcome <- quanti.eventi.finali
-            percentuale <- as.integer((totale.outcome/res$sonHits)*100)
-            riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",totale.outcome,"/",res$sonHits,": ",percentuale,"%)' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )
+          # Sono qui se si deve analizzare un predictive.mode
+          if( predictive.model.engine.type == "default") {
+            
+            if(sonLabel %in% predictive.model.skipNodeLabel) {
+              totale.outcome <- res$num.outcome
+              totale.outcome <- quanti.eventi.finali
+              riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",totale.outcome,")' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )
+            } else {
+              totale.outcome <- res$num.outcome
+              totale.outcome <- quanti.eventi.finali
+              # - im
+              denominatore <- lst.nodi[[son]]$hits
+              percentuale <- as.integer((totale.outcome/denominatore)*100)
+              riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",totale.outcome,"/",denominatore,": ",percentuale,"%)' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )            
+              # percentuale <- as.integer((totale.outcome/res$sonHits)*100)
+              # riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",totale.outcome,"/",res$sonHits,": ",percentuale,"%)' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )            
+              # -fm
+            }
+            riga.archi <- paste( c("'",starting.ID,"'->'",son,"' [label='",arcLabel,"', color = ",arcColor,", penwidth = ",penwidth,", arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
           }
-          riga.archi <- paste( c("'",starting.ID,"'->'",son,"' [label='",arcLabel,"', color = ",arcColor,", penwidth = ",penwidth,", arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
+          
+          if( predictive.model.engine.type == "kNN") {
+            
+            # predictive.model.engine.parameter$variables e' la lista delle covariate, specificate con i relativi attributi
+            # predictive.model.engine.parameter$outcome  contiene i dati su come elaborare l'outcome
+            
+            arr.variabili <- names(predictive.model.engine.parameter$variables)
+            for(variabile.label in arr.variabili ) {
+              tmp.elemento <- predictive.model.engine.parameter$variables[[ variabile.label  ]]
+              if( tmp.elemento == "timeFromRoot" ) {
+                arr.IPP.2.explore <- lst.nodi[[son]]$IPP
+                for(tmp.IPP in arr.IPP.2.explore) {
+                  tp.tempo <- loadedDataset$pat.process[[ tmp.IPP ]][lst.nodi[[son]]$depth, "pMineR.deltaDate"]
+                  tp.next.events <- loadedDataset$pat.process[[ tmp.IPP ]][lst.nodi[[son]]$depth:nrow(loadedDataset$pat.process[[ tmp.IPP ]]), c(loadedDataset$csv.EVENTName, "pMineR.deltaDate")]
+                  browser()
+                }
+              }
+              browser()
+            }
+            browser()
+          }
+          
         }
         
         if( show.far.leaf & (lst.nodi[[son]]$depth == depth) & (lst.nodi[[son]]$evento != predictive.model.outcome) ) {
