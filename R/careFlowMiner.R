@@ -1,7 +1,7 @@
 #' A class for a revisited Careflow Mining
 #'
 #' @description  This is an implementation of the Care Flow Mining algorithm, a bit revisited
-#' @import progress
+#' @import progress rjson
 #' @export
 
 
@@ -134,8 +134,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                             kindOfGraph = "twopi", GraphFontsize = "9" , 
                             withPercentages = TRUE,
                             relative.percentages = FALSE, 
-                            proportionalPenwidth=TRUE , default.arcColor = "Black",
-                            arr.States.color=c(),
+                            proportionalPenwidth=TRUE , default.arcColor = "Black", proportionalPenwidth.k.thickness = 5,
+                            arr.States.color=c(), arr.States.color.shades = FALSE, arr.States.color.shades.thresholds = c(25,50,75),
                             predictive.model = FALSE, predictive.model.outcome = "", predictive.model.skipNodeLabel = c(),
                             predictive.model.engine.type = "default", predictive.model.engine.parameter = list(),
                             preserve.topology = FALSE, set.to.gray = FALSE, set.to.gray.color= "WhiteSmoke" , debug.it = FALSE,
@@ -205,14 +205,16 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
           }
           if( predictive.model == FALSE) {
             arcLabel <- paste( c(percentuale,"%"),collapse =  '')
+            arcLabel.value = percentuale
           } else {
             percentuale <- as.integer((arcLabel/totale)*100)
             arcLabel <- paste( c(as.integer((arcLabel/totale)*100) ,"%"),collapse =  '')  
+            arcLabel.value = percentuale
           }
           arc.fontsize <- "8.5"
         }
         if( proportionalPenwidth == TRUE ) {
-          penwidth <- 5*(percentuale/100)+0.2
+          penwidth <- proportionalPenwidth.k.thickness*(percentuale/100)+0.2
         }
         if(length(arr.States.color) > 0) {
           if( lst.nodi[[son]]$evento %in% names(arr.States.color)) {
@@ -224,7 +226,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         if(debug.it==TRUE) browser()
         # if( lst.nodi[[son]]$evento == predictive.model.outcome ) browser()
         res <- plotCFGraph( depth = depth , starting.ID = son , currentLevel = currentLevel + 1, total.hits = total.hits,
-                            default.arcColor = default.arcColor, arr.States.color = arr.States.color,
+                            default.arcColor = default.arcColor, arr.States.color = arr.States.color, proportionalPenwidth.k.thickness = proportionalPenwidth.k.thickness,
                             predictive.model = predictive.model, predictive.model.outcome = predictive.model.outcome, 
                             predictive.model.engine.type = predictive.model.engine.type,
                             predictive.model.engine.parameter = predictive.model.engine.parameter,
@@ -237,7 +239,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                             show.median.time.from.root = show.median.time.from.root,
                             heatmap.based.on.median.time = heatmap.based.on.median.time,
                             heatmap.base.color = heatmap.base.color, 
-                            abs.threshold = abs.threshold , nodeShape = nodeShape
+                            abs.threshold = abs.threshold , nodeShape = nodeShape,
+                            arr.States.color.shades = arr.States.color.shades, arr.States.color.shades.thresholds = arr.States.color.shades.thresholds
         )
         
         
@@ -264,6 +267,14 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         if( lst.nodi[[son]]$evento == predictive.model.outcome ) quanti.eventi.finali <- lst.nodi[[son]]$hits
         
         if( predictive.model == FALSE) {
+          
+          if( sonLabel %in% arr.States.color.shades ) {
+            # browser()
+            if(arcLabel.value >= 0 &  arcLabel.value < arr.States.color.shades.thresholds[1]) fillColor <- paste(c(fillColor,2),collapse = "")
+            if(arcLabel.value >= arr.States.color.shades.thresholds[1]  &  arcLabel.value < arr.States.color.shades.thresholds[2]) fillColor <- paste(c(fillColor,2),collapse = "")
+            if(arcLabel.value >= arr.States.color.shades.thresholds[2]  &  arcLabel.value < arr.States.color.shades.thresholds[3]) fillColor <- paste(c(fillColor,3),collapse = "")
+            if(arcLabel.value >= arr.States.color.shades.thresholds[3] ) fillColor <- paste(c(fillColor,4),collapse = "")
+          }
           
           stringa.tempi <- ""
           if( show.median.time.from.root  == TRUE) {
@@ -296,6 +307,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
               # - im
               denominatore <- lst.nodi[[son]]$hits
               percentuale <- as.integer((totale.outcome/denominatore)*100)
+
               riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",totale.outcome,"/",denominatore,": ",percentuale,"%)' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )            
               # percentuale <- as.integer((totale.outcome/res$sonHits)*100)
               # riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",totale.outcome,"/",res$sonHits,": ",percentuale,"%)' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )            
