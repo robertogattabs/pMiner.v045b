@@ -1,7 +1,7 @@
 #' A class for a revisited Careflow Mining
 #'
 #' @description  This is an implementation of the Care Flow Mining algorithm, a bit revisited
-#' @import progress rjson
+#' @import progress 
 #' @export
 
 
