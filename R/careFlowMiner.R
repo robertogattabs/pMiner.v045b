@@ -126,7 +126,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
            "mtr.res"=mtr.res)
     )
   }
-
+  
   # ---------------------------------------------------------------
   # retrieve the data structure
   # ---------------------------------------------------------------   
@@ -167,6 +167,11 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     # if( currentLevel > 4 ) browser()
     
     arrId2Jump <- names(which(MM[starting.ID,]!=""))
+    if( length(arrId2Jump) > 1 ) {
+      arrId2Jump <- arrId2Jump[order(unlist(lapply(arrId2Jump,function(i) { lst.nodi[[i]]$evento })))]  
+    }
+    
+    
     if(currentLevel == 0 ) { total.hits <- lst.nodi[[starting.ID]]$hits }
     arr.nodi <- c()
     arr.archi <- c()
@@ -180,6 +185,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     totaleSonHits <- 0
     totale <- lst.nodi[[starting.ID]]$hits
     totale <- length(lst.nodi[[starting.ID]]$IPP)
+    # browser()
     if( length(arrId2Jump) > 0 ) {
       totale <- sum(unlist(lapply( arrId2Jump, function(x) {lst.nodi[[x]]$hits} )))
       num.outcome <- 0
@@ -307,7 +313,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
               # - im
               denominatore <- lst.nodi[[son]]$hits
               percentuale <- as.integer((totale.outcome/denominatore)*100)
-
+              
               riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",totale.outcome,"/",denominatore,": ",percentuale,"%)' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )            
               # percentuale <- as.integer((totale.outcome/res$sonHits)*100)
               # riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",totale.outcome,"/",res$sonHits,": ",percentuale,"%)' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )            
@@ -505,6 +511,9 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     }
     
     arrId2Jump <- names(which(MM[starting.ID,]!=""))
+    if( length(arrId2Jump) > 1 ) {
+      arrId2Jump <- arrId2Jump[order(unlist(lapply(arrId2Jump,function(i) { lst.nodi[[i]]$evento })))]  
+    }    
     arr.nodi <- c()
     arr.archi <- c()
     script <- ""
@@ -652,9 +661,10 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
               fontColor <- "Gray"
               arcColor <- "Gray"
             }
+            # browser()
             ratio.hits <- format( (tmp.res.first.hits / tmp.res.second.hits) , digits = 2)
             Stringa.Totali.Originali <- paste(c("\n",morti.first,"/",totali.first," vs ",morti.second,"/",totali.second),collapse = '')
-            Stringa.sotto <- paste(c("\n",tmp.res.first.hits,"/",tmp.res.second.hits,"(ratio ",ratio.hits,")","\n p = ",p.value),collapse = '')
+            Stringa.sotto <- paste(c("\n",tmp.res.first.hits,"/",tmp.res.second.hits,"(ratio ",ratio.hits," : ",format(((as.numeric(ratio.hits) - (totali.first / totali.second))/(totali.first / totali.second))*100,digits = 4),"%)","\n p = ",p.value),collapse = '')
             
           } else {
             # -im RG
@@ -663,7 +673,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             totali.second <- res$second.missed + res$second.hits             
             ratio.hits <- format( (res$first.hits / res$second.hits) , digits = 2)
             Stringa.Totali.Originali <- paste(c("\n",res$first.hits,"/",totali.first," vs ",res$second.hits,"/",totali.second),collapse = '')
-            Stringa.sotto <- paste(c("\n","(ratio ",ratio.hits,")","\n p = ",p.value),collapse = '')
+            Stringa.sotto <- paste(c("\n","(ratio ",ratio.hits," : ",format(((as.numeric(ratio.hits) - (totali.first / totali.second))/(totali.first / totali.second))*100,digits = 4),"%)","\n p = ",p.value),collapse = '')
             # -fm RG
           }
           
