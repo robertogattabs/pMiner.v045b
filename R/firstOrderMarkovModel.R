@@ -88,7 +88,7 @@ firstOrderMarkovModel<-function( parameters.list = list() ) {
     res<-list()
     tempo<-list()
     data.ora<-list()
-    
+    # browser()
     for(i in seq(1,numberOfPlays)) {
       chiave <- as.character(i)
       res[[chiave]]<-play.Single()

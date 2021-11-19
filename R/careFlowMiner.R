@@ -324,21 +324,28 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
           
           if( predictive.model.engine.type == "kNN") {
             
-            # predictive.model.engine.parameter$variables e' la lista delle covariate, specificate con i relativi attributi
-            # predictive.model.engine.parameter$outcome  contiene i dati su come elaborare l'outcome
-            
+            # # predictive.model.engine.parameter$variables e' la lista delle covariate, specificate con i relativi attributi
+            # # predictive.model.engine.parameter$outcome  contiene i dati su come elaborare l'outcome
+            # 
             arr.variabili <- names(predictive.model.engine.parameter$variables)
+            mtr.res <- c()
             for(variabile.label in arr.variabili ) {
-              tmp.elemento <- predictive.model.engine.parameter$variables[[ variabile.label  ]]
-              if( tmp.elemento == "timeFromRoot" ) {
-                arr.IPP.2.explore <- lst.nodi[[son]]$IPP
-                for(tmp.IPP in arr.IPP.2.explore) {
-                  tp.tempo <- loadedDataset$pat.process[[ tmp.IPP ]][lst.nodi[[son]]$depth, "pMineR.deltaDate"]
-                  tp.next.events <- loadedDataset$pat.process[[ tmp.IPP ]][lst.nodi[[son]]$depth:nrow(loadedDataset$pat.process[[ tmp.IPP ]]), c(loadedDataset$csv.EVENTName, "pMineR.deltaDate")]
-                  browser()
-                }
-              }
-              browser()
+            #   tmp.elemento <- predictive.model.engine.parameter$variables[[ variabile.label  ]]
+            #   if( tmp.elemento$type == "timeFromRoot" ) {
+            #     arr.IPP.2.explore <- lst.nodi[[son]]$IPP
+            #     for(tmp.IPP in arr.IPP.2.explore) {
+            #       tp.tempo <- loadedDataset$pat.process[[ tmp.IPP ]][lst.nodi[[son]]$depth, "pMineR.deltaDate"]
+            #       tp.next.events <- loadedDataset$pat.process[[ tmp.IPP ]][lst.nodi[[son]]$depth:nrow(loadedDataset$pat.process[[ tmp.IPP ]]), c(loadedDataset$csv.EVENTName, "pMineR.deltaDate")]
+            #       
+            #       tToReachOutcome <- NA
+            #       if( predictive.model.outcome %in% tp.next.events[[loadedDataset$csv.EVENTName]] ) {
+            #         browser()
+            #       } else { tToReachOutcome <- Inf }
+            #       mtr.res <- rbind( mtr.res , c(  "IPP"=tmp.IPP,"tempo"=tp.tempo , "t2Outcome"=tToReachOutcome ) )
+            #       
+            #     }
+            #   }
+            #   browser()
             }
             browser()
           }
@@ -372,7 +379,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
               
               tmp.str.arco <- paste( c("'",son,"'->'",names(tabella.ultimi)[i],"' [style='dashed', label='', color = '",colore.arco <- "grey","', penwidth = 0.8, arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
               tmp.str.nodo <- paste( c("'",names(tabella.ultimi)[i],"' [ label='",names(table(arr.ultimi))[i],"\n(",tabella.ultimi[i],"/",res$sonHits,")' , color='",colore.nodo,"', fillcolor = '",fillColor,"' , style = filled]"),collapse = "" )
-              # -im RG  
+              # -im RG DA DECIDERE 
               if(is.na(abs.threshold) | sonHits >= abs.threshold) {
                 arr.archi <- c( arr.archi , tmp.str.arco)
                 arr.nodi <- c( arr.nodi , tmp.str.nodo )

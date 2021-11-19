@@ -250,7 +250,7 @@ QoDInspector <- function( UM = "" ) {
     
     sinonimi <- unlist(global.processInstances.toSymbol)
     names(sinonimi) <- names(global.processInstances.toSymbol)
-    # browser()
+    
     ooo <- str_split(stringa , operator)[[1]]
     first.o <- str_trim(ooo[1])
     second.o <- str_trim(ooo[2])      
@@ -369,12 +369,17 @@ QoDInspector <- function( UM = "" ) {
     rules <- c( "->" = "[ ']*[0-9a-zA-Z_ ]+[ ']*(->)[ ']*[0-9a-zA-Z_ ]+[ ']*",
                 "-->" = "[ ']*[0-9a-zA-Z_ ]+[ ']*(-->)[ ']*[0-9a-zA-Z_ ]+[ ']*"
     )
-
+    # rules <- c( "->" = "[ ']*[0-9a-zA-Z_ +-]+[ ']*(->)[ ']*[0-9a-zA-Z_ +-]+[ ']*",
+    #             "-->" = "[ ']*[0-9a-zA-Z_ +-]+[ ']*(-->)[ ']*[0-9a-zA-Z_ +-]+[ ']*"
+    # )
+    
+    
     # Estrai i pezzi che soddisfano la regexp
     # browser()
     stringa <- query
     kkk <- unlist(lapply( 1:length(rules), function(i) { 
       ret <- c()
+      # browser()
       ooo <- unique(str_trim(str_extract_all(stringa, rules[i])[[1]]))
       for( k in ooo ) ret <- c(ret, c(k , names(rules)[i]))
       return(ret)
@@ -383,7 +388,7 @@ QoDInspector <- function( UM = "" ) {
     kkk <- cbind(kkk, rep("",nrow(kkk)))
     colnames(kkk)<-c("rule","operator","value")
     nuova.stringa <- stringa
-    
+    # browser()
     # ora risolvile una per una
     for( riga in 1:nrow(kkk) ) {
       risultato <- strAtomicSolver( ID, kkk[riga,1] , kkk[riga,2] , evt.sequence = evt.sequence  )
@@ -395,7 +400,7 @@ QoDInspector <- function( UM = "" ) {
         nuova.stringa <- str_replace_all(string = str_replace_all(nuova.stringa,"'","`"),pattern = str_replace_all(kkk[riga,"rule"],"'","`"), "FALSE")
       
     }
-    
+    # browser()
     res.parsato <- eval(expr = parse(text = nuova.stringa))
     
     return( 
