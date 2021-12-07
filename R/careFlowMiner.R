@@ -164,13 +164,11 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
       default.arcColor <- set.to.gray.color
     }
     if(debug.it==TRUE) browser()
-    # if( currentLevel > 4 ) browser()
-    
+
     arrId2Jump <- names(which(MM[starting.ID,]!=""))
     if( length(arrId2Jump) > 1 ) {
       arrId2Jump <- arrId2Jump[order(unlist(lapply(arrId2Jump,function(i) { lst.nodi[[i]]$evento })))]  
     }
-    
     
     if(currentLevel == 0 ) { total.hits <- lst.nodi[[starting.ID]]$hits }
     arr.nodi <- c()
@@ -180,12 +178,12 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     if( currentLevel == 0) {
       arr.nodi <- c(paste( c("'",starting.ID,"' [ label='",lst.nodi[[starting.ID]]$evento,"\n(",total.hits,")', penwidth=3]"),collapse = "" ))
     }
-    # if(debug.it==TRUE) browser()
+
     num.outcome <- 0
     totaleSonHits <- 0
     totale <- lst.nodi[[starting.ID]]$hits
     totale <- length(lst.nodi[[starting.ID]]$IPP)
-    # browser()
+
     if( length(arrId2Jump) > 0 ) {
       totale <- sum(unlist(lapply( arrId2Jump, function(x) {lst.nodi[[x]]$hits} )))
       num.outcome <- 0
@@ -194,8 +192,6 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         sonLabel <- lst.nodi[[son]]$evento
         sonHits <- lst.nodi[[son]]$hits
         totaleSonHits <- totaleSonHits + sonHits
-        
-        # if(!is.na(abs.threshold) & sonHits < abs.threshold) next;
         
         arc.fontsize <- "1"
         penwidth <- "1"
@@ -209,9 +205,17 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
           } else {
             percentuale <- as.integer((arcLabel/total.hits)*100)  
           }
+          edge.perc.father <- as.integer((arcLabel/totale)*100)  
+          edge.perc.root <- as.integer((arcLabel/total.hits)*100)  
+          edge.sonHits <- sonHits
           if( predictive.model == FALSE) {
-            arcLabel <- paste( c(percentuale,"%"),collapse =  '')
-            arcLabel.value = percentuale
+            # -im 
+            # arcLabel <- paste( c(percentuale,"%"),collapse =  '')
+            # arcLabel.value = percentuale
+            arcLabel <- paste( c(edge.perc.father,"%\n",edge.perc.root,"%"),collapse =  '')
+            arcLabel.value = edge.perc.root
+            # -fm
+            
           } else {
             percentuale <- as.integer((arcLabel/totale)*100)
             arcLabel <- paste( c(as.integer((arcLabel/totale)*100) ,"%"),collapse =  '')  
@@ -228,9 +232,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             if( set.to.gray == TRUE) { fillColor <- set.to.gray.color } 
           }
         }
-        
-        if(debug.it==TRUE) browser()
-        # if( lst.nodi[[son]]$evento == predictive.model.outcome ) browser()
+
         res <- plotCFGraph( depth = depth , starting.ID = son , currentLevel = currentLevel + 1, total.hits = total.hits,
                             default.arcColor = default.arcColor, arr.States.color = arr.States.color, proportionalPenwidth.k.thickness = proportionalPenwidth.k.thickness,
                             predictive.model = predictive.model, predictive.model.outcome = predictive.model.outcome, 
@@ -249,18 +251,6 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                             arr.States.color.shades = arr.States.color.shades, arr.States.color.shades.thresholds = arr.States.color.shades.thresholds
         )
         
-        
-        # nodo.partenza <- lst.nodi[[starting.ID]]$depth + 1
-        # quanti.eventi.finali <- sum(unlist(lapply(lst.nodi[[starting.ID]]$IPP , function(IPP) {
-        #     sequenza <- c()
-        #     if( length(loadedDataset$wordSequence.raw[[IPP]]) >= nodo.partenza) {
-        #       sequenza <- loadedDataset$wordSequence.raw[[IPP]][nodo.partenza:length(loadedDataset$wordSequence.raw[[IPP]])] 
-        #     }
-        #     if( predictive.model.outcome %in% sequenza) return(1)
-        #     return(0)
-        # })))
-        # nodo.partenza <- lst.nodi[[son]]$depth + 1
-        # show.median.time.from.root
         nodo.partenza <- lst.nodi[[son]]$depth
         quanti.eventi.finali <- sum(unlist(lapply(unique(lst.nodi[[son]]$IPP) , function(IPP) {
           sequenza <- c()
@@ -275,7 +265,6 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         if( predictive.model == FALSE) {
           
           if( sonLabel %in% arr.States.color.shades ) {
-            # browser()
             if(arcLabel.value >= 0 &  arcLabel.value < arr.States.color.shades.thresholds[1]) fillColor <- paste(c(fillColor,2),collapse = "")
             if(arcLabel.value >= arr.States.color.shades.thresholds[1]  &  arcLabel.value < arr.States.color.shades.thresholds[2]) fillColor <- paste(c(fillColor,2),collapse = "")
             if(arcLabel.value >= arr.States.color.shades.thresholds[2]  &  arcLabel.value < arr.States.color.shades.thresholds[3]) fillColor <- paste(c(fillColor,3),collapse = "")
@@ -290,7 +279,6 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
               stringa.tempi <- paste( c( "\n",min(tmp.tempi)," - ",median(tmp.tempi)," - ",max(tmp.tempi)  ), collapse = '')
               if( length(heatmap.based.on.median.time) > 0 ) {
                 arr.numeri.colore <- heatmap.based.on.median.time
-                # if( str_to_lower(heatmap.base.color) == "grey") arr.numeri.colore <- as.integer(seq(min(heatmap.based.on.median.time),max(heatmap.based.on.median.time),by= (max(heatmap.based.on.median.time) - min(heatmap.based.on.median.time))/90))
                 paletteColorNumber <- which(c(arr.numeri.colore,Inf) - median(tmp.tempi) >= 0)[1]
                 fillColor <-  paste(c(heatmap.base.color,paletteColorNumber),collapse = '')
               }
@@ -310,14 +298,11 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             } else {
               totale.outcome <- res$num.outcome
               totale.outcome <- quanti.eventi.finali
-              # - im
+              
               denominatore <- lst.nodi[[son]]$hits
               percentuale <- as.integer((totale.outcome/denominatore)*100)
               
               riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",totale.outcome,"/",denominatore,": ",percentuale,"%)' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )            
-              # percentuale <- as.integer((totale.outcome/res$sonHits)*100)
-              # riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",totale.outcome,"/",res$sonHits,": ",percentuale,"%)' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )            
-              # -fm
             }
             riga.archi <- paste( c("'",starting.ID,"'->'",son,"' [label='",arcLabel,"', color = ",arcColor,", penwidth = ",penwidth,", arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
           }
@@ -326,7 +311,6 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             
             # # predictive.model.engine.parameter$variables e' la lista delle covariate, specificate con i relativi attributi
             # # predictive.model.engine.parameter$outcome  contiene i dati su come elaborare l'outcome
-            # 
             arr.variabili <- names(predictive.model.engine.parameter$variables)
             mtr.res <- c()
             for(variabile.label in arr.variabili ) {
@@ -356,7 +340,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
           arr.ultimi <- unlist(lapply( lst.nodi[[son]]$IPP, function(IPP) {
             return(tail(loadedDataset$pat.process[[IPP]][[ loadedDataset$csv.EVENTName ]],n=1))
           } ) )
-          # browser()  
+ 
           if( length(arr.ultimi) > 0) {
             
             colore.arco <- "grey"
@@ -367,7 +351,6 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             
             tabella.ultimi <- table(arr.ultimi)
             names(tabella.ultimi) <- unlist(lapply( 1:nrow(tabella.ultimi), function(i) { paste(c( names(tabella.ultimi)[i] ,son),collapse = "_") }))
-            # ak47 <- unlist(lapply( 1:nrow(tabella.ultimi), function(i) { paste(c( names(tabella.ultimi)[i] ,son),collapse = "_") }))
             for(i in 1:length(tabella.ultimi)) {
               fillColor <- "White"
               if(length(arr.States.color) > 0) {
@@ -379,38 +362,29 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
               
               tmp.str.arco <- paste( c("'",son,"'->'",names(tabella.ultimi)[i],"' [style='dashed', label='', color = '",colore.arco <- "grey","', penwidth = 0.8, arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
               tmp.str.nodo <- paste( c("'",names(tabella.ultimi)[i],"' [ label='",names(table(arr.ultimi))[i],"\n(",tabella.ultimi[i],"/",res$sonHits,")' , color='",colore.nodo,"', fillcolor = '",fillColor,"' , style = filled]"),collapse = "" )
-              # -im RG DA DECIDERE 
               if(is.na(abs.threshold) | sonHits >= abs.threshold) {
                 arr.archi <- c( arr.archi , tmp.str.arco)
                 arr.nodi <- c( arr.nodi , tmp.str.nodo )
               }
-              # arr.archi <- c( arr.archi , tmp.str.arco)
-              # arr.nodi <- c( arr.nodi , tmp.str.nodo )
-              # -fm RG  
+
             }
           }
         }
         
-        # -im RG          
         if(is.na(abs.threshold) | sonHits >= abs.threshold) {
           arr.nodi <- c( arr.nodi , riga.nodi )
           arr.archi <- c( arr.archi , riga.archi)
         }
-        # arr.nodi <- c( arr.nodi , riga.nodi )
-        # arr.archi <- c( arr.archi , riga.archi)
-        # -fm RG
-        
+
         if( res$num.outcome > 0 ) num.outcome <- num.outcome +  res$num.outcome
         altri.nodi <- res$arr.nodi
         altri.archi <- res$arr.archi 
-        
         
         arr.nodi <- c( arr.nodi , altri.nodi)
         arr.archi <- c( arr.archi , altri.archi)
       }
       
     }
-    
     
     if( currentLevel == 0 ) {
       script <- "
