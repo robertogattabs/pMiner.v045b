@@ -3,6 +3,15 @@
 #' 
 #' @description  A class which provide some tools. pMineR intarnal use only.
 # =============================================================================
+expand.grid.unique <- function(x, y, include.equals=FALSE) {
+  x <- unique(x)
+  y <- unique(y)
+  g <- function(i){
+    z <- setdiff(y, x[seq_len(i-include.equals)])
+    if(length(z)) cbind(x[i], z, deparse.level=0)
+  }
+  do.call(rbind, lapply(seq_along(x), g))
+}
 utils<-function() {
   dectobin <- function(y) {
     # find the binary sequence corresponding to the decimal number 'y'
@@ -507,6 +516,116 @@ plotPatientReplayedTimelineFunction<-function( list.computation.matrix , patient
   }
   # list.computation.matrix
 } 
+
+
+#' @import stringr
+#' @export
+dateTimeWizard <- function( ) {
+  
+  guess_date_format <- function( arr.strings, theBest = TRUE ) {
+    res <- lapply(arr.strings, function(stringa) {
+      return(single.guess_date_format(stringa))
+    })
+    
+    tabella <- table(unlist(res))
+    tabella[order(tabella,decreasing = T)]
+    if( theBest == TRUE) return( names(tabella)[1])
+    return(tabella)
+  }
+  single.guess_date_format <- function( stringa ) {
+    separatore <- unique(unlist(str_extract_all(string = stringa,pattern = "[^0-9]")))
+    if( length( separatore ) != 1 ) return( NA )
+    arr.elementi <- unlist(str_split(string = stringa,pattern = separatore))
+    if( length( arr.elementi ) !=3 ) return( NA )
+    
+    if( as.numeric(arr.elementi[1]) > 31 ) {
+      primo <- c("%Y") } else {
+        if( as.numeric(arr.elementi[1]) > 12 )  {
+          primo <- c("%Y","%d")
+        } else {
+          primo <- c("%Y","%m","%d")
+        }
+      }
+    
+    if( as.numeric(arr.elementi[2]) > 31 ) {
+      secondo <- c("%Y") } else {
+        if( as.numeric(arr.elementi[2]) > 12 )  {
+          secondo <- c("%Y","%d")
+        } else {
+          secondo <- c("%Y","%m","%d")
+        }
+      }
+    
+    if( as.numeric(arr.elementi[3]) > 31 ) {
+      terzo <- c("%Y") } else {
+        if( as.numeric(arr.elementi[3]) > 12 )  {
+          terzo <- c("%Y","%d")
+        } else {
+          terzo <- c("%Y","%m","%d")
+        }
+      }
+    
+    mtr.opzioni <- expand.grid( primo, secondo, terzo )
+    
+    mtr.opzioni[,1] <- as.character(mtr.opzioni[,1])
+    mtr.opzioni[,2] <- as.character(mtr.opzioni[,2]) 
+    mtr.opzioni[,3] <- as.character(mtr.opzioni[,3]) 
+    
+    new.mtr <- c()
+    tmp <- lapply(1:nrow(mtr.opzioni),function(i) {
+      if(length(unique(unlist(mtr.opzioni[i,]))) == 3) {
+        new.mtr <<- rbind(new.mtr,mtr.opzioni[i,])
+      }
+    })
+    
+    arr.opzioni <- unlist(lapply(1:nrow(new.mtr),function(i) { 
+      return( paste(new.mtr[i,],collapse = separatore)  )
+    }))
+    return(arr.opzioni)
+  }
+  guess_datetime_format <- function( stringa ) {
+    
+  }
+  guess_time_format <- function( arr.strings, theBest = TRUE ) {
+    # browser()
+    res <- lapply(arr.strings, function(stringa) {
+      return(single.guess_time_format(stringa))
+    })
+    
+    tabella <- table(unlist(res))
+    if( length(tabella) == 0 ) return()
+    tabella[order(tabella,decreasing = T)]
+    if( theBest == TRUE) return( names(tabella)[1])
+    return(tabella)
+    
+  }
+  
+  single.guess_time_format <- function( stringa ) {
+    if(is.na(stringa)) return(stringa)
+    separatore <- unique(unlist(str_extract_all(string = stringa,pattern = "[^0-9]")))
+    res <- paste( c("%H","%m","%s"), collapse = separatore)
+    return( res )
+  }
+  
+  guess_datetime_format <- function( arr.string ) {
+    tmp.1 <- unlist(lapply( arr.string, function(x){ return(substr(x,1,10))}))
+    tmp.2 <- unlist(lapply( arr.string, function(x){ return(substr(x,12,str_length(x)))}))
+    # browser()
+    str.data <- guess_date_format(arr.strings = tmp.1)
+    str.time <- guess_time_format(arr.strings = tmp.2)
+    final.proposal <- str_trim(paste(c( str.data," ",str.time),collapse = ''))
+    return( final.proposal )
+  }
+  
+  return( list(
+    "guess_date_format"=guess_date_format,
+    "single.guess_date_format"=single.guess_date_format,
+    "guess_datetime_format"=guess_datetime_format,
+    "guess_time_format"=guess_time_format,
+    "single.guess_time_format"=single.guess_time_format
+  ))
+}
+
 
 #' A function to plot nice timeline
 #'

@@ -338,13 +338,17 @@ dataLoader<-function( verbose.mode = TRUE, max.char.length.label = 50, save.memo
   } 
   load.data.frame<-function( mydata, IDName, EVENTName, dateColumnName=NA, 
                              format.column.date = "%d/%m/%Y %H:%M:%S", 
-                             convertUTF = TRUE, suppress.invalid.date = TRUE) {
+                             convertUTF = TRUE, suppress.invalid.date = TRUE , guessDataFormat = FALSE) {
     # clear all the attributes
     obj.Utils <- utils()
     clearAttributes( );
     param.column.names<<-colnames(mydata)
     # browser()
     stocazzo <- mydata
+    if( guessDataFormat == TRUE ) {
+      ooo <- dateTimeWizard()
+      format.column.date <- ooo$guess_datetime_format(arr.string = mydata[[dateColumnName]])
+    }    
 
     if(length(mydata[[dateColumnName]]) == 0) { obj.LH$sendLog( c("dateColumnName '",dateColumnName,"' not present! ")  ,"ERR"); return() }
     if(length(mydata[[EVENTName]]) == 0) { obj.LH$sendLog( c("EVENTName '",EVENTName,"' not present! ")  ,"ERR"); return() }
