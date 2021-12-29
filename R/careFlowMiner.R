@@ -549,7 +549,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         wilcoxTest.p <- NA
         if(checkDurationFromRoot == TRUE) {
           if( length(res$first.ID) > 0 & length(res$second.ID) > 0 & starting.ID!="root") {
-            wilcoxTest.p <- suppressWarnings(wilcox.test( unlist(lapply( res$first.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })) / divisore,
+            wilcoxTest.p <- suppressWarnings(wilcox.test( paired = FALSE,
+                                                          unlist(lapply( res$first.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })) / divisore,
                                                           unlist(lapply( res$second.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })) / divisore)$p.value)
             wilcoxTest.p <- as.numeric(format(wilcoxTest.p, digits = 3))
           } else {
@@ -883,7 +884,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         wilcoxTest.p <- NA
         if(checkDurationFromRoot == TRUE) {
           if( length(res$first.ID) > 0 & length(res$second.ID) > 0 & starting.ID!="root") {
-            wilcoxTest.p <- suppressWarnings(wilcox.test( unlist(lapply( res$first.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })),
+            wilcoxTest.p <- suppressWarnings(wilcox.test( paired = FALSE,
+                                                          unlist(lapply( res$first.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })),
                                                           unlist(lapply( res$second.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })))$p.value)
             wilcoxTest.p <- as.numeric(format(wilcoxTest.p, digits = 3))
           } else {
@@ -1741,7 +1743,8 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
         wilcoxTest.p <- NA
         if(checkDurationFromRoot == TRUE) {
           if( length(res$first.ID) > 0 & length(res$second.ID) > 0 & starting.ID!="root") {
-            wilcoxTest.p <- suppressWarnings(wilcox.test( unlist(lapply( res$first.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })),
+            wilcoxTest.p <- suppressWarnings(wilcox.test( paired = FALSE,
+                                                          unlist(lapply( res$first.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })),
                                                           unlist(lapply( res$second.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })))$p.value)
             wilcoxTest.p <- as.numeric(format(wilcoxTest.p, digits = 3))
           } else {
@@ -2041,7 +2044,8 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
         wilcoxTest.p <- NA
         if(checkDurationFromRoot == TRUE) {
           if( length(res$first.ID) > 0 & length(res$second.ID) > 0 & starting.ID!="root") {
-            wilcoxTest.p <- suppressWarnings(wilcox.test( unlist(lapply( res$first.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })),
+            wilcoxTest.p <- suppressWarnings(wilcox.test( paired = FALSE,
+                                                          unlist(lapply( res$first.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })),
                                                           unlist(lapply( res$second.ID, function(IPP) { return( loadedDataset$pat.process[[IPP]]$pMineR.deltaDate[currentLevel+1] ) })))$p.value)
             wilcoxTest.p <- as.numeric(format(wilcoxTest.p, digits = 3))
           } else {
