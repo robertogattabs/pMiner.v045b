@@ -85,6 +85,52 @@ QOD <- function( UM = "" ) {
     
     return(res)
   } 
+  #=================================================================================
+  # path.count
+  #=================================================================================  
+  path.count <- function( evtSequenceLength = 1, notMoreThanOnePerPatient = FALSE , fromBegin = TRUE ) {
+    browser()
+  }
+  #=================================================================================
+  # eventHeatmap
+  #=================================================================================
+  eventHeatmap <- function( cex = 0.5 , threshold.low = 0.5, threshold.hi = 1, show.diagonal = TRUE, par.margin = c(4, 10, 10, 2)) {
+    
+    objDL.new.export <- global.dataLoader
+    
+    arr.eventi <- objDL.new.export$arrayAssociativo[!(objDL.new.export$arrayAssociativo %in% c("BEGIN","END"))]
+    MM.Cross <- matrix( 0,nrow = length(arr.eventi), ncol = length(arr.eventi) )
+    colnames(MM.Cross) <- arr.eventi; rownames(MM.Cross) <- arr.eventi;
+    tmp.1 <- lapply( rownames(MM.Cross) , function(event.C) {
+      tmp.2 <- lapply(colnames(MM.Cross), function(event.R) {
+        tmp.3 <- lapply( names(objDL.new.export$pat.process) , function(patID) {
+          arr.evt.to.chech <- objDL.new.export$pat.process[[patID]][[objDL.new.export$csv.EVENTName]]
+          if( event.C %in% arr.evt.to.chech & event.R %in% arr.evt.to.chech) {
+            MM.Cross[ event.R , event.C ] <<- MM.Cross[ event.R , event.C ] + 1
+          }
+        })
+      } )
+    })
+    aaa <- MM.Cross
+    tmp.1 <- lapply( 1:nrow(MM.Cross) , function(riga) { 
+      MM.Cross[riga,] <<- MM.Cross[riga,] / MM.Cross[riga,riga]
+    })
+    
+    
+    par(mar = par.margin) 
+    image(t(MM.Cross[nrow(MM.Cross):1,]),col = heat.colors(256) , axes=FALSE )
+    arr.posizioni <- (0.1:ncol(MM.Cross)/(ncol(MM.Cross)-1))
+    axis(2, arr.posizioni, labels=rownames(MM.Cross)[length(rownames(MM.Cross)):1],las=2)
+    axis(3, arr.posizioni, labels=rownames(MM.Cross),las=2)
+    for( riga in 1:nrow(MM.Cross)) {
+      for( colonna in 1:ncol(MM.Cross)) {
+        valore <- t(MM.Cross[ncol(MM.Cross)-colonna+1,riga])
+        if( valore >= threshold.low & valore <= threshold.hi ) {
+          text((riga-1)/(nrow(MM.Cross)-1),(colonna-1)/(ncol(MM.Cross)-1),format(valore,digits = 2) , cex=cex ) 
+        }
+      }
+    }
+  }  
   
   #=================================================================================
   # clearAttributes
@@ -107,6 +153,8 @@ QOD <- function( UM = "" ) {
   #===========================================================
   return( list(
     "loadDataset"=loadDataset,
-    "query"=query
+    "query"=query,
+    "eventHeatmap"=eventHeatmap
+    # "path.count"=path.count
   ) )
 }
