@@ -23,7 +23,9 @@ QOD <- function( UM = "" ) {
   #=================================================================================
   # query
   #=================================================================================
-  query <- function( from , to , complement = FALSE, time.range=c(0,Inf), step.range = c(1,Inf) , UM = NA, forceCheck = TRUE) {
+  query <- function( from , to , complement = FALSE, time.range=c(0,Inf), step.range = c(1,Inf) , UM = NA, 
+                     arr.passingThrough = c(), arr.NOTpassingThrough = c(),
+                     forceCheck = TRUE) {
     EventName <- global.dataLoader$csv.EVENTName
     if( (!(from %in% global.dataLoader$arrayAssociativo) | !(to %in% global.dataLoader$arrayAssociativo)) & forceCheck == TRUE) {
       stop("Error: from or to not available as events in the Event Log")
@@ -63,6 +65,13 @@ QOD <- function( UM = "" ) {
         if(! (MM[riga,"time"] >= time.range[1] & MM[riga,"time"] <= time.range[2]) ) {
           valido <- FALSE
         }
+        if( sum(arr.passingThrough %in% subMM[[EventName]][ MM[riga,1]:MM[riga,2] ]) != length(arr.passingThrough) )  {
+          valido <- FALSE
+        }
+        if( sum(arr.NOTpassingThrough %in% subMM[[EventName]][ MM[riga,1]:MM[riga,2] ]) >0 )  {
+          valido <- FALSE
+        }        
+        # browser()
         MM[riga,"valid"] <- valido
       }
       return(sum(MM[,"valid"]) > 0)
