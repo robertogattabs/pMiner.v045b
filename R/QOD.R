@@ -25,13 +25,14 @@ QOD <- function( UM = "" ) {
   #=================================================================================
   query <- function( from , to , complement = FALSE, time.range=c(0,Inf), step.range = c(1,Inf) , UM = NA, 
                      arr.passingThrough = c(), arr.NOTpassingThrough = c(),
-                     forceCheck = TRUE) {
+                     forceCheck = TRUE, returnCompleteMatrix = FALSE) {
     EventName <- global.dataLoader$csv.EVENTName
     if( (!(from %in% global.dataLoader$arrayAssociativo) | !(to %in% global.dataLoader$arrayAssociativo)) & forceCheck == TRUE) {
       stop("Error: from or to not available as events in the Event Log")
     }
     
     if(is.na(UM)) UM <- global.UM
+    mainMM <- c()
     tmp.res <- unlist(lapply( names( global.dataLoader$pat.process ), function(ID) {
       subMM <- global.dataLoader$pat.process[[ID]]
       
@@ -74,8 +75,18 @@ QOD <- function( UM = "" ) {
         # browser()
         MM[riga,"valid"] <- valido
       }
+      mainMM <<- rbind(mainMM, cbind( rep(ID,nrow(MM)), MM ) )
       return(sum(MM[,"valid"]) > 0)
     } ))
+    # browser()
+    # mainMM <- mainMM[ which(mainMM[,"valid"] == 1),]
+    nomiColonne <- colnames(mainMM)
+    mainMM <- matrix(mainMM[ which(mainMM[,"valid"] == 1),], ncol=ncol(mainMM))
+    if(length(mainMM) == 0) return(NA)
+    colnames(mainMM) <- nomiColonne
+    mainMM[,2] <- as.numeric(mainMM[,2])-1
+    mainMM[,3] <- as.numeric(mainMM[,3])-1
+    if( returnCompleteMatrix == TRUE ) return(mainMM)
     
     res <- names( global.dataLoader$pat.process )[which(tmp.res==TRUE)]
     
