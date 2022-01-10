@@ -726,3 +726,106 @@ plotCohortTimeline <- function(  objDL.obj, lst.to.join=list() , lst.spike=list(
   axis(2, arr.y.to.put.labels, labels=names(objDL.new.export$pat.process),las=2)
   axis(1, seq(0,biggestTime,by = y.step.each), labels=seq(0,biggestTime,by = y.step.each),las=1)
 }
+# plotTimeline <- function(  objDL.obj, arr.ID = c(), max.time = Inf , UM = "days", arr.events = c(), 
+#                            arr.evt.pch = c(), evt.pch.default.value = 3,
+#                            ID.on.y.label  = TRUE, y.label.cex = 0.7,
+#                            Time.on.x.label = TRUE, x.label.cex = 0.7,
+#                            plot.legend = TRUE, legend.Pos = "topright", legend.cex = 0.7,
+#                            ID.ordering = TRUE, ID.ordering.desc = TRUE
+# ) {
+#   
+#   max.time.window <- max.time
+#   if( UM == "hours" ) { max.time.window <- max.time.window * 60 }
+#   if( UM == "days" ) { max.time.window <- max.time.window * 60*24  }
+#   if( UM == "weeks" ) { max.time.window <- max.time.window *  60*24*7  }
+#   if( UM == "months" ) { max.time.window <- max.time.window * 60*24*30  }
+#   
+#   arr.ID <- sample(names(objDL.out$pat.process),size = 30)
+#   evtName <- objDL.out$csv.EVENTName
+#   
+#   bigM <- do.call(rbind,objDL.out$pat.process[arr.ID])
+#   time.range <- range(bigM$pMineR.deltaDate)
+#   maxTime <- min(max(bigM$pMineR.deltaDate),max.time.window)
+#   max.x <- maxTime
+#   
+#   
+#   if( ID.ordering == TRUE) {
+#     arr.ID <- arr.ID[order(unlist(lapply(arr.ID, function(ID)  {  max(objDL.out$pat.process[[ID]]$pMineR.deltaDate)   } )),decreasing = ID.ordering.desc)]  
+#   }
+#   
+#   if( length(arr.ID) == 0 ) arr.ID <- names(objDL.out$pat.process)
+#   x.offset <- 0; y.offset <- 0
+#   if(ID.on.y.label==TRUE) { x.offset <- 0.1 }
+#   if(Time.on.x.label==TRUE) { y.offset <- 0.1 }
+#   
+#   
+#   n.patients <- length(arr.ID)
+#   if( length(arr.events) == 0 ) { arr.events <- unlist(unique(bigM[ evtName ])) }
+#   arr.col <- rainbow(n = length(arr.events)); names(arr.col) <- arr.events
+#   # browser()
+#   # set the array of pch
+#   add.arr.evt.pch <- c()
+#   tmp.n <- unlist(lapply( arr.events, function(i) {   if( !(i %in% names(arr.evt.pch)) ) return(i) }))
+#   tmp.v <- rep(evt.pch.default.value,length(tmp.n)); names(tmp.v) <- tmp.n
+#   arr.evt.pch <- c(arr.evt.pch ,tmp.v )
+#   
+#   minThickness <- 5
+#   
+#   frameIt <- function( x , y ) {
+#     abs.x.offset <- max.x * x.offset;  
+#     m <- (max.x - abs.x.offset) / max.x
+#     x <- m * x + abs.x.offset
+#     return( c(x,y) )
+#   }
+#   
+#   par(mar=c(1,1,1,1))
+#   plot( 0 , 0 , xlim = c( 0 , max.x ) , ylim = c( 0, (n.patients+1) * minThickness ), axes = FALSE, xlab = UM , ylab="" , col="white")
+#   if( Time.on.x.label == TRUE ) {
+#     xy.1 <- frameIt( 0, 0 ); xy.2 <- frameIt( maxTime, 0 )
+#     points( x = c(xy.1[1],xy.2[1]), y = c(xy.1[2],xy.1[2]), col="black", type='l')
+#     if( UM == "mins" ) { x.sequenza <- seq( 0 , maxTime ) }
+#     if( UM == "hours" ) { x.sequenza <- seq( 0 , maxTime , by = 60 ) }
+#     if( UM == "days" ) { x.sequenza <- seq( 0 , maxTime , by = 60*24 ) }
+#     if( UM == "weeks" ) { x.sequenza <- seq( 0 , maxTime , by = 60*24*7 ) }
+#     if( UM == "months" ) { x.sequenza <- seq( 0 , maxTime , by = 60*24*30 ) }
+#     x.sequenza <- x.sequenza[1:(length(x.sequenza)-1)]
+#     # browser()
+#     for( i in 1:length(x.sequenza) ) {
+#       xy <- frameIt( x.sequenza[i], 0 );
+#       points( x = xy[1], y = xy[2], col="black", pch=3)
+#       label <- x.sequenza[i]
+#       if( UM == "hours" ) { label <- label/60  }
+#       if( UM == "days" ) { label <- label/ (60*24)  }
+#       if( UM == "weeks" ) { label <- label/ (60*24*7)  }
+#       if( UM == "months" ) { label <- label/ (60*24*30)  }
+#       
+#       text(xy[1],xy[2],label,pos = 1 ,cex = x.label.cex )
+#     }
+#   }
+#   
+#   tmp <- lapply(1:length( arr.ID ),function( riga ) {
+#     ID <- arr.ID[riga]
+#     subMM <- objDL.out$pat.process[[ID]]
+#     maxTime <- max(subMM$pMineR.deltaDate)
+#     
+#     xy.1 <- frameIt( 0, (riga*minThickness) ); xy.2 <- frameIt( maxTime, (riga*minThickness) )
+#     points( x = c(xy.1[1],xy.2[1]), y = c(xy.1[2],xy.1[2]), col="grey", type='l')
+#     
+#     if( ID.on.y.label == TRUE ) { 
+#       text( (max.x / 100 ), (riga*minThickness) , ID, cex = y.label.cex  )
+#     }
+#     
+#     for( linea in 1:nrow( subMM )) {
+#       if( subMM[[ evtName ]][linea] %in%  arr.events ) {
+#         pch.val <- arr.evt.pch[subMM[[ evtName ]][linea]]
+#         if( grepl("[0-9]+",pch.val) ) pch.val <- as.numeric(pch.val)
+#         xy <- frameIt( subMM$pMineR.deltaDate[linea]  ,  (riga*minThickness) )
+#         points( x = xy[1] ,  y = xy[2] , pch = pch.val, lwd=1, col=arr.col[subMM[[ evtName ]][linea]]  )   
+#       }
+#     }
+#   })
+#   if( plot.legend == TRUE) {
+#     legend( legend.Pos, legend = arr.events, col =  arr.col, lty=1, lwd=2 , cex = legend.cex)
+#   }
+#   
+# }
