@@ -25,9 +25,10 @@ QOD <- function( UM = "" ) {
   #=================================================================================
   query <- function( from , to , complement = FALSE, time.range=c(0,Inf), step.range = c(1,Inf) , UM = NA, 
                      arr.passingThrough = c(), arr.NOTpassingThrough = c(),
-                     forceCheck = TRUE, returnCompleteMatrix = FALSE) {
+                     returnCompleteMatrix = FALSE) {
+    forceCheck <- TRUE
     EventName <- global.dataLoader$csv.EVENTName
-    if( (!(from %in% global.dataLoader$arrayAssociativo) | !(to %in% global.dataLoader$arrayAssociativo)) & forceCheck == TRUE) {
+    if( (!(from %in% global.dataLoader$arrayAssociativo) | (!(to %in% global.dataLoader$arrayAssociativo) & to!="*") ) & forceCheck == TRUE ) {
       stop("Error: from or to not available as events in the Event Log")
     }
     
@@ -47,6 +48,8 @@ QOD <- function( UM = "" ) {
 
       arr.from <- which(subMM[[EventName]] == from)
       arr.to <- which(subMM[[EventName]] == to)
+      
+      if( to == "*" & length(arr.from)>0) arr.to <- arr.from + 1
       
       if( length(arr.from) == 0 | length(arr.to) == 0 ) return( FALSE )
       
@@ -145,14 +148,14 @@ QOD <- function( UM = "" ) {
   #=================================================================================
   # plotTimeline
   #=================================================================================  
-  plotTimeline <- function(  objDL.obj, arr.ID = c(), max.time = Inf , UM = "days", arr.events = c(), 
+  plotTimeline <- function(  objDL.obj=c(), arr.ID = c(), max.time = Inf , UM = "days", arr.events = c(), 
                              arr.evt.pch = c(), evt.pch.default.value = 3,
                              ID.on.y.label  = TRUE, y.label.cex = 0.7,
                              Time.on.x.label = TRUE, x.label.cex = 0.7,
                              plot.legend = TRUE, legend.Pos = "topright", legend.cex = 0.7,
                              ID.ordering = TRUE, ID.ordering.desc = TRUE
   ) {
-    
+    if( length(objDL.obj) == 0 )  objDL.obj <- global.dataLoader
     max.time.window <- max.time
     if( UM == "hours" ) { max.time.window <- max.time.window * 60 }
     if( UM == "days" ) { max.time.window <- max.time.window * 60*24  }
@@ -252,6 +255,101 @@ QOD <- function( UM = "" ) {
     }
     
   }
+  
+  #=================================================================================
+  # plotTraceEvolution
+  #=================================================================================
+  plotTraceEvolution <- function( objDL.out, holdEvts = FALSE , UM = "days" , max.t = Inf, 
+                             legend.Pos = "topright", plot.legend = TRUE, legend.cex = 0.8,
+                             arr.ID = c(), cumulative = FALSE, arr.events = c()) {
+    
+    get.during.time <- function( loadedData , max.t , UM , holdEvts , arr.events) {
+      
+      tmpDLS <- loadedData
+      
+      if( UM == "mins") convUM <- 1
+      if( UM == "hours") convUM <- 60
+      if( UM == "days") convUM <- 60*24
+      if( UM == "weeks") convUM <- 60*24*7
+      if( UM == "months") convUM <- 60*24*30
+      
+      new_t <- do.call(rbind, tmpDLS$pat.process )
+      new_t$pMineR.deltaDate <-  as.integer(new_t$pMineR.deltaDate/convUM)
+      
+      arr.eventi <- arr.events
+      if( length(arr.eventi)==0 ) {
+        arr.eventi <- unique(new_t[[tmpDLS$csv.EVENTName]])  
+      }
+      
+      max.t <- min(max(new_t$pMineR.deltaDate) , max.t)
+      
+      lst.valori <- list()  
+      for(t in 1:max.t) {
+        if( length(arr.ID) == 0 ) arr.ID <- names(tmpDLS$pat.process)
+        eventi.t <- unlist(lapply( arr.ID, function(IPP) { 
+          if( holdEvts == TRUE ) {
+            quale <- which(tmpDLS$pat.process[[IPP]]$pMineR.deltaDate <= (t*convUM)   )  
+          } else {
+            quale <- which(tmpDLS$pat.process[[IPP]]$pMineR.deltaDate >= ((t-1)*convUM) & tmpDLS$pat.process[[IPP]]$pMineR.deltaDate <= ((t)*convUM)   )
+          }
+          quale <- quale[ length(quale) ]
+          tmpDLS$pat.process[[IPP]][[tmpDLS$csv.EVENTName]][quale]
+          
+        }  ))
+        
+        tbl.eventi.t <- table(eventi.t)  
+        
+        for(evento in arr.eventi) {
+          if(evento %in% names(tbl.eventi.t)) {
+            lst.valori[[as.character(t)]][[evento]] <- tbl.eventi.t[evento]  
+          } else  {
+            lst.valori[[as.character(t)]][[evento]] <- 0
+          }
+          if( cumulative == TRUE & holdEvts==FALSE & t>1) {
+            lst.valori[[as.character(t)]][[evento]] <- lst.valori[[as.character(t)]][[evento]] + lst.valori[[as.character(t-1)]][[evento]]
+          }
+        }
+      }
+      return(list("lst.valori"=lst.valori,"arr.eventi"=arr.eventi))
+    }
+    
+    
+    if( holdEvts == TRUE ) {
+      WTF<- get.during.time(loadedData = objDL.out, UM = UM, max.t = max.t, holdEvts = holdEvts, arr.events = arr.events)
+    } else {
+      WTF<- get.during.time(loadedData = objDL.out, UM = UM, max.t = max.t, holdEvts = holdEvts, arr.events = arr.events)  
+    }
+    
+    lst.valori.1 <- WTF$lst.valori
+    arr.eventi.1 <- WTF$arr.eventi
+    
+    arr.colore <- rainbow(n = length(arr.eventi.1)); names(arr.colore) <- arr.eventi.1
+    for(i in 1:length(arr.eventi.1)) {
+      evento <- arr.eventi.1[i]
+      y <- unlist(lapply(names(lst.valori.1), function(t) {  
+        lst.valori.1[[t]][[evento]] 
+      } ))
+
+      if( holdEvts == TRUE ) {
+        y.max.val <- sum(unlist(lst.valori.1[[1]]))
+        y.vals <- y/y.max.val; ylim <- c(0,1);ylab <- "%"
+      } else {
+        y.max.val <- max(unlist(lst.valori.1))
+        y.vals <- y; ylim <- c(0,y.max.val); ylab <- "abs"
+      }
+      if( i == 1) {
+        plot( as.numeric(names(lst.valori.1)) ,y.vals, type='l', lwd=2,col=arr.colore[i], 
+              xlab=UM, ylab=ylab, ylim=ylim, main="traces evolution")  
+      } else {
+        points( as.numeric(names(lst.valori.1)) , y.vals, type='l', lwd=2, col=arr.colore[i])  
+      }
+    }
+    if( plot.legend == TRUE ) {
+      legend(legend.Pos, legend=arr.eventi.1,
+             col=arr.colore[1:length(arr.eventi.1)], lty=1, cex=legend.cex)
+    }
+    
+  }  
   #=================================================================================
   # clearAttributes
   #=================================================================================
@@ -275,7 +373,8 @@ QOD <- function( UM = "" ) {
     "loadDataset"=loadDataset,
     "query"=query,
     "eventHeatmap"=eventHeatmap,
-    "plotTimeline"=plotTimeline
+    "plotTimeline"=plotTimeline,
+    "plotTraceEvolution"=plotTraceEvolution
     # "path.count"=path.count
   ) )
 }

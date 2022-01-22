@@ -480,11 +480,11 @@ dataLoader<-function( verbose.mode = TRUE, max.char.length.label = 50, save.memo
 
     return(list(
       "arrayAssociativo"=arrayAssociativo,
-      "footPrint"=footPrint,
+      # "footPrint"=footPrint,
       "MMatrix"=MMatrix,
-      "pat.process"=pat.process,
       "MMatrix.perc"=MMatrix.perc,
       "MMatrix.perc.noLoop"=MMatrix.perc.noLoop,
+      "pat.process"=pat.process,
       "wordSequence.raw"=wordSequence.raw,
       "MM.mean.time"=MM.mean.time,
       "MM.density.list"=MM.density.list,
