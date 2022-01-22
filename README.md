@@ -10,10 +10,10 @@ Try with:
 
 ## Loading the Event Log
 
-please, see the following tutorial: [Class dataLoader](/docs/01.dataLoader.html).
+please, see the tutorial *01.dataLoader.htm* in the *docs* folder
 
 
 ## Event Log querying and scouting
 
 
-please, see the following tutorial: [Class QOD](https://github.com/robertogattabs/pMiner.v045b/blob/main/docs/02.QualityOfData.html).
+please, see the tutorial *02.QualityOfData.htm* in the *docs* folder
