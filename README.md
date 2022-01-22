@@ -10,7 +10,7 @@ Try with:
 
 ## Loading the Event Log
 
-please, see the following tutorial: [Class dataLoader](https://github.com/robertogattabs/pMiner.v045b/blob/main/docs/01.dataLoader.html).
+please, see the following tutorial: [Class dataLoader](/docs/01.dataLoader.html).
 
 
 ## Event Log querying and scouting
