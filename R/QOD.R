@@ -156,6 +156,7 @@ QOD <- function( UM = "" ) {
                              ID.ordering = TRUE, ID.ordering.desc = TRUE
   ) {
     if( length(objDL.obj) == 0 )  objDL.obj <- global.dataLoader
+    objDL.out <- objDL.obj
     max.time.window <- max.time
     if( UM == "hours" ) { max.time.window <- max.time.window * 60 }
     if( UM == "days" ) { max.time.window <- max.time.window * 60*24  }

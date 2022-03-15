@@ -76,6 +76,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
           lst.nodi[[id]]$duration <<- c(lst.nodi[[id]]$duration , deltaTime)
         }  
       } 
+      # browser()
       old.id <- id
     }
   }
@@ -104,8 +105,16 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
       
       # cat("\n ID: (",ID,")",sequenza)
       add.path(sequenza = sequenza, col.dateFrom = col.dateFrom, col.dateTo = col.dateTo, IPP = ID )
+      # browser()
       lst.nodi[[ "root" ]]$hits <-  lst.nodi[[ "root" ]]$hits + 1
     }
+    for( nodeName in names(lst.nodi) ) {
+      if( nodeName != "root"){
+        arr.eventi <- DLS$pat.process[[ lst.nodi[[nodeName]]$IPP[1] ]][[ DLS$csv.EVENTName ]][1 : lst.nodi[[nodeName]]$depth] 
+        lst.nodi[[nodeName]]$arr.evt <<- arr.eventi
+      }
+    }
+    
   }
   # ---------------------------------------------------------------
   # retrieve the data structure
@@ -131,7 +140,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
   # retrieve the data structure
   # ---------------------------------------------------------------   
   plotCFGraph <- function(  depth= 2 , starting.ID = "root", currentLevel = 0, total.hits = 0,
-                            kindOfGraph = "twopi", GraphFontsize = "9" , 
+                            kindOfGraph = "dot", GraphFontsize = "9" , 
                             withPercentages = TRUE,
                             relative.percentages = FALSE, 
                             proportionalPenwidth=TRUE , default.arcColor = "Black", proportionalPenwidth.k.thickness = 5,
@@ -141,7 +150,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                             preserve.topology = FALSE, set.to.gray = FALSE, set.to.gray.color= "WhiteSmoke" , debug.it = FALSE,
                             show.far.leaf = FALSE, 
                             show.median.time.from.root = FALSE, heatmap.based.on.median.time = FALSE , 
-                            heatmap.base.color = "Khaki", abs.threshold = NA , nodeShape = "oval") {
+                            heatmap.base.color = "Khaki", abs.threshold = NA , nodeShape = "square",
+                            printNodeID = FALSE) {
     # withPercentages <- TRUE; 
     if( predictive.model.engine.type != "default" ) {
       predictive.model <- TRUE;
@@ -248,7 +258,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                             heatmap.based.on.median.time = heatmap.based.on.median.time,
                             heatmap.base.color = heatmap.base.color, 
                             abs.threshold = abs.threshold , nodeShape = nodeShape,
-                            arr.States.color.shades = arr.States.color.shades, arr.States.color.shades.thresholds = arr.States.color.shades.thresholds
+                            arr.States.color.shades = arr.States.color.shades, arr.States.color.shades.thresholds = arr.States.color.shades.thresholds,
+                            printNodeID = printNodeID
         )
         
         nodo.partenza <- lst.nodi[[son]]$depth
@@ -284,17 +295,20 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
               }
             }
           }
-          
-          riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",sonHits,")",stringa.tempi,"' ,  fillcolor = '",fillColor,"' , style = filled]"),collapse = "" )
+          if(printNodeID==TRUE) {idName <- paste(c("#",son,"\n"),collapse = '')
+          } else {idName <- ""}
+          riga.nodi <- paste( c("'",son,"' [ label='",idName,sonLabel,"\n(",sonHits,")",stringa.tempi,"' ,  fillcolor = '",fillColor,"' , style = filled]"),collapse = "" )
           riga.archi <- paste( c("'",starting.ID,"'->'",son,"' [label='",arcLabel,"', color = ",arcColor,", penwidth = ",penwidth,", arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
         } else{
           # Sono qui se si deve analizzare un predictive.mode
           if( predictive.model.engine.type == "default") {
+            if(printNodeID==TRUE) {idName <- paste(c("#",son,"\n"),collapse = '')
+            } else {idName <- ""}            
             
             if(sonLabel %in% predictive.model.skipNodeLabel) {
               totale.outcome <- res$num.outcome
               totale.outcome <- quanti.eventi.finali
-              riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",totale.outcome,")' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )
+              riga.nodi <- paste( c("'",son,"' [ label='",idName,sonLabel,"\n(",totale.outcome,")' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )
             } else {
               totale.outcome <- res$num.outcome
               totale.outcome <- quanti.eventi.finali
@@ -302,7 +316,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
               denominatore <- lst.nodi[[son]]$hits
               percentuale <- as.integer((totale.outcome/denominatore)*100)
               
-              riga.nodi <- paste( c("'",son,"' [ label='",sonLabel,"\n(",totale.outcome,"/",denominatore,": ",percentuale,"%)' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )            
+              riga.nodi <- paste( c("'",son,"' [ label='",idName,sonLabel,"\n(",totale.outcome,"/",denominatore,": ",percentuale,"%)' , color=",default.arcColor,", fillcolor = ",fillColor," , style = filled]"),collapse = "" )            
             }
             riga.archi <- paste( c("'",starting.ID,"'->'",son,"' [label='",arcLabel,"', color = ",arcColor,", penwidth = ",penwidth,", arrowsize=0.8, fontsize = ",arc.fontsize,"]"),collapse = "" )
           }

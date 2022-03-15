@@ -494,7 +494,7 @@ firstOrderMarkovModel<-function( parameters.list = list() ) {
     m.int<-matrice; m.ext<-matrice;  
     colnames(matrice)<-listaStati;     rownames(matrice)<-listaStati
     colnames(m.int)<-listaStati;     rownames(m.int)<-listaStati
-    colnames(m.ext)<-listaStati;     rownames(m.ext)<-listaStati    
+    colnames(m.ext)<-listaStati;     rownames(m.ext)<-listaStati  
     
     for(riga in seq(1,nrow(combinazioni))) {
       matrice[  combinazioni[riga,"from"] , combinazioni[riga,"to"]   ]<- abs(combinazioni[riga,"int"] - combinazioni[riga,"ext"])
