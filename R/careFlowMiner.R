@@ -2451,6 +2451,18 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
     
   }
   
+  #===========================================================
+  # KaplanMeier
+  #===========================================================
+  KaplanMeier<-function( fromNodeID, toNodeId, toEventName, onlyGivenPatientID, Cens.Node, 
+                         Cens.EventName 
+                        )  {
+    browser()
+    
+  } 
+  
+  
+  
   constructor <- function( verboseMode  ) {
     MM <<- matrix("",ncol=1, nrow=1)
     colnames(MM) <<- c("root")
