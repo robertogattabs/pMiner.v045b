@@ -481,7 +481,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     if( length(decoded.seq) > 0 ) {
       decoded.seq <- unlist(lapply( 1:length(decoded.seq), function(i) { lst.nodi[[decoded.seq[[i]]]]$evento } ))      
     }
-    # browser()
+    # cat("\n",starting.ID)
+    # if(starting.ID=="0") browser()
     if( lst.nodi[[starting.ID]]$depth == depth ) {
       # browser()
       if( debug.it == TRUE)  browser()
@@ -558,6 +559,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                                 depth = depth, arr.States.color = arr.States.color,
                                 set.to.gray = set.to.gray, show.far.leaf = show.far.leaf,
                                 abs.threshold = abs.threshold, kindOfGraph = kindOfGraph, nodeShape = nodeShape, UM = UM) 
+        # if(son=="0") browser() 
         # browser()
         matriceFisher <- matrix( c(res$first.hits, res$first.missed , res$second.hits , res$second.missed), byrow = F, ncol=2 )
         wilcoxTest.p <- NA
@@ -659,8 +661,9 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             }
             # browser()
             ratio.hits <- format( (tmp.res.first.hits / tmp.res.second.hits) , digits = 2)
+            orig.ratio.hits <- res$first.hits / res$second.hits
             Stringa.Totali.Originali <- paste(c("\n",morti.first,"/",totali.first," vs ",morti.second,"/",totali.second),collapse = '')
-            Stringa.sotto <- paste(c("\n",tmp.res.first.hits,"/",tmp.res.second.hits,"(ratio ",ratio.hits," : ",format(((as.numeric(ratio.hits) - (totali.first / totali.second))/(totali.first / totali.second))*100,digits = 4),"%)","\n p = ",p.value),collapse = '')
+            Stringa.sotto <- paste(c("\n",tmp.res.first.hits,"/",tmp.res.second.hits,"(ratio ",ratio.hits," : ",format(((as.numeric(orig.ratio.hits) - (totali.first / totali.second))/(totali.first / totali.second))*100,digits = 4),"%)","\n p = ",p.value),collapse = '')
             
           } else {
             # -im RG
@@ -668,8 +671,9 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             totali.first <- res$first.missed + res$first.hits
             totali.second <- res$second.missed + res$second.hits             
             ratio.hits <- format( (res$first.hits / res$second.hits) , digits = 2)
+            orig.ratio.hits <- res$first.hits / res$second.hits
             Stringa.Totali.Originali <- paste(c("\n",res$first.hits,"/",totali.first," vs ",res$second.hits,"/",totali.second),collapse = '')
-            Stringa.sotto <- paste(c("\n","(ratio ",ratio.hits," : ",format(((as.numeric(ratio.hits) - (totali.first / totali.second))/(totali.first / totali.second))*100,digits = 4),"%)","\n p = ",p.value),collapse = '')
+            Stringa.sotto <- paste(c("\n","(ratio ",ratio.hits," : ",format(((as.numeric(orig.ratio.hits) - (totali.first / totali.second))/(totali.first / totali.second))*100,digits = 4),"%)","\n p = ",p.value),collapse = '')
             # -fm RG
           }
           
