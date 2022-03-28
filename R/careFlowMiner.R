@@ -663,7 +663,12 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
             ratio.hits <- format( (tmp.res.first.hits / tmp.res.second.hits) , digits = 2)
             orig.ratio.hits <- res$first.hits / res$second.hits
             Stringa.Totali.Originali <- paste(c("\n",morti.first,"/",totali.first," vs ",morti.second,"/",totali.second),collapse = '')
-            Stringa.sotto <- paste(c("\n",tmp.res.first.hits,"/",tmp.res.second.hits,"(ratio ",ratio.hits," : ",format(((as.numeric(orig.ratio.hits) - (totali.first / totali.second))/(totali.first / totali.second))*100,digits = 4),"%)","\n p = ",p.value),collapse = '')
+            if( hitsMeansReachAGivenFinalState == FALSE ) {
+              Stringa.sotto <- paste(c("\n",tmp.res.first.hits,"/",tmp.res.second.hits,"(ratio ",ratio.hits," : ",format(((as.numeric(orig.ratio.hits) - (totali.first / totali.second))/(totali.first / totali.second))*100,digits = 4),"%)","\n p = ",p.value),collapse = '')
+            } else {
+              Stringa.sotto <- paste(c("\n",tmp.res.first.hits,"/",tmp.res.second.hits,"\n p = ",p.value),collapse = '')  
+            }
+            
             
           } else {
             # -im RG
