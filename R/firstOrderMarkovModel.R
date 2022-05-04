@@ -222,9 +222,10 @@ firstOrderMarkovModel<-function( parameters.list = list() ) {
       MM <- MMatrix.perc.noLoop
     }
     # sistema la threshold 
+    # browser()
     aa<- MMatrix.perc; bb <- MMatrix
+    bb[ which(aa<=threshold,arr.ind = T) ]<-0
     aa[ which(aa<=threshold,arr.ind = T) ]<-0
-    bb[ which(bb<=threshold,arr.ind = T) ]<-0
     for( i in seq( 1 , nrow(aa)) ) {if(sum(aa[i,])>0)  {aa[i,]<-aa[i,]/sum(aa[i,]);} } 
     MMatrix.perc<<-aa ; MMatrix<<-bb
     grafo<-build.graph.from.table( MM = MMatrix.perc, threshold  = threshold)
@@ -698,6 +699,9 @@ firstOrderMarkovModel<-function( parameters.list = list() ) {
           
           peso<-as.numeric(MM[i, listaNodiRiga[ct]])
           peso.rounded <- round(peso, digits = 2)
+          denominatore <- sum(MMatrix[i, ])
+          numeratore <- MMatrix[i, listaNodiRiga[ct]] 
+          
           if (peso.rounded==0) {peso.rounded <- "<0.01"}
           penwidth<- peso*3 + 0.01
           if(penwidth<0.4) penwidth=0.4
@@ -725,7 +729,9 @@ firstOrderMarkovModel<-function( parameters.list = list() ) {
             }
           } else {
             if(peso > threshold) {
-              stringaNodiComplessi<-paste(   c(stringaNodiComplessi, "'",listaNodi[i],"'->'",listaNodiRiga[ct],"' [ label='",peso.rounded,"', penwidth='",penwidth,"' ,fontsize = '",fontSize,"', color = Gray",colore,"]\n"), collapse = '')
+              stringa.arco <- paste(c(numeratore,"/",denominatore,"\n( ",peso.rounded," )"),collapse = '')
+              # stringaNodiComplessi<-paste(   c(stringaNodiComplessi, "'",listaNodi[i],"'->'",listaNodiRiga[ct],"' [ label='",peso.rounded,"', penwidth='",penwidth,"' ,fontsize = '",fontSize,"', color = Gray",colore,"]\n"), collapse = '')
+              stringaNodiComplessi<-paste(   c(stringaNodiComplessi, "'",listaNodi[i],"'->'",listaNodiRiga[ct],"' [ label='",stringa.arco,"', penwidth='",penwidth,"' ,fontsize = '",fontSize,"', color = Gray",colore,"]\n"), collapse = '')
               arr.nodi.con.archi<-c(arr.nodi.con.archi,listaNodi[i],listaNodiRiga[ct] )
             }
           }
