@@ -5,7 +5,7 @@
 Try with:
   
   
-  remotes::install_github("robertogattabs/pMiner.v045b") 
+  remotes::install_github("robertogattabs/pMiner.v045b@main") 
   
 
 ## Loading the Event Log
