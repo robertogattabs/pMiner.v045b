@@ -53,7 +53,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
   # ---------------------------------------------------------------
   # aggiungi un path all'albero
   # ---------------------------------------------------------------
-  add.path <- function( sequenza, debug = FALSE, col.dateFrom=c(), col.dateTo=c() , ID="", UM="days" ,IPP="") {
+  add.path <- function( sequenza, debug = FALSE, col.dateFrom=c(), col.dateTo=c() , ID="", UM="days" ,IPP="", col.pMineR.deltaDate = c()) {
     old.id <- "root"
     for( i in 1:length(sequenza)) {
       id <- get.id( sequenza, i, fromID = old.id , debug = debug )
@@ -69,7 +69,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
       }
       
       if(length(col.dateFrom)>0) {
-        lst.nodi[[id]]$activationDates <<- c( lst.nodi[[id]]$activationDates , col.dateFrom[i]) 
+        lst.nodi[[id]]$activationDates <<- c( lst.nodi[[id]]$activationDates , col.dateFrom[i])
+        lst.nodi[[id]]$pMineR.deltaDate <<- c( lst.nodi[[id]]$pMineR.deltaDate , col.pMineR.deltaDate[i]) 
         lst.nodi[[id]]$IPP <<- unique(c( lst.nodi[[id]]$IPP , IPP ))
         if(length(col.dateTo)>0) {
           deltaTime <- difftime(as.Date(col.dateTo[i],format = attr.dateToFormat),as.Date(col.dateFrom[i],format = attr.date.format),units = "days")
@@ -90,7 +91,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     lst.nodi[[ "root" ]] <<- list("evento" = "root", "hits" = length(DLS$pat.process), "depth" = 0, "duration"=c())
     loadedDataset <<-  DLS
     
-    if(param.verbose == TRUE) pb <- txtProgressBar(min = 0, max = length(names(pat.process)), style = 3)
+    if(param.verbose == TRUE) pb <- txtProgressBar(min = 0, max = length(names(DLS$pat.process)), style = 3)
     pb.ct <- 0
     
     for( ID in names(DLS$pat.process) ) {
@@ -99,12 +100,13 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
       
       sequenza <- DLS$pat.process[[ID]][,DLS$csv.EVENTName]
       col.dateFrom <- DLS$pat.process[[ID]][,DLS$csv.dateColumnName]
+      col.pMineR.deltaDate <- DLS$pat.process[[ID]][,"pMineR.deltaDate"]
       if(!is.na(dateToColumnName)) {
         col.dateTo <- DLS$pat.process[[ID]][,dateToColumnName]  
       } else { col.dateTo <- c() }
       
       # cat("\n ID: (",ID,")",sequenza)
-      add.path(sequenza = sequenza, col.dateFrom = col.dateFrom, col.dateTo = col.dateTo, IPP = ID )
+      add.path(sequenza = sequenza, col.dateFrom = col.dateFrom, col.dateTo = col.dateTo, IPP = ID, col.pMineR.deltaDate = col.pMineR.deltaDate )
       # browser()
       lst.nodi[[ "root" ]]$hits <-  lst.nodi[[ "root" ]]$hits + 1
     }
@@ -121,6 +123,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
   # ---------------------------------------------------------------   
   getDataStructure <- function() {
     
+    arr.duration <- unlist(lapply(1:length(lst.nodi),function(i) {lst.nodi[[i]]$duration} ))
+    arr.pMineR.deltaDate <- unlist(lapply(1:length(lst.nodi),function(i) {lst.nodi[[i]]$pMineR.deltaDate} ))
     arr.depth <- unlist(lapply(1:length(lst.nodi),function(i) {lst.nodi[[i]]$depth} ))
     arr.freq <- unlist(lapply(1:length(lst.nodi),function(i) {lst.nodi[[i]]$hits} ))
     arr.mean.duration <- unlist(lapply(1:length(lst.nodi),function(i) { if(length(lst.nodi[[i]]$duration)>0) {return(mean(lst.nodi[[i]]$duration))} else{return(0)}   } ))
@@ -1419,12 +1423,13 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
       
       sequenza <- DLS$pat.process[[ID]][,DLS$csv.EVENTName]
       col.dateFrom <- DLS$pat.process[[ID]][,DLS$csv.dateColumnName]
+      col.pMineR.deltaDate <- DLS$pat.process[[ID]][,"pMineR.deltaDate"]
       if(!is.na(dateToColumnName)) {
         col.dateTo <- DLS$pat.process[[ID]][,dateToColumnName]  
       } else { col.dateTo <- c() }
       
       # cat("\n ID: (",ID,")",sequenza)
-      add.path(sequenza = sequenza, col.dateFrom = col.dateFrom, col.dateTo = col.dateTo, IPP = ID )
+      add.path(sequenza = sequenza, col.dateFrom = col.dateFrom, col.dateTo = col.dateTo, IPP = ID, col.pMineR.deltaDate = col.pMineR.deltaDate )
       lst.nodi[[ "root" ]]$hits <-  lst.nodi[[ "root" ]]$hits + 1
     }
   }
