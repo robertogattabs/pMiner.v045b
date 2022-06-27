@@ -663,7 +663,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
               fontColor <- "Gray"
               arcColor <- "Gray"
             }
-            # browser()
+            browser()
             ratio.hits <- format( (tmp.res.first.hits / tmp.res.second.hits) , digits = 2)
             orig.ratio.hits <- res$first.hits / res$second.hits
             Stringa.Totali.Originali <- paste(c("\n",morti.first,"/",totali.first," vs ",morti.second,"/",totali.second),collapse = '')
