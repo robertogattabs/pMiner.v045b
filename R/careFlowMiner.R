@@ -2482,12 +2482,12 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
   #=================================================================================
   # plotNodeStats
   #=================================================================================  
-  plotNodeStats <- function(  arr.nodes.from, EL=c(), arr.nodes.to = c(), abs.threshold = NA,
+  plotNodeStats <- function(  arr.nodes.from, arr.nodes.to = c(), abs.threshold = NA,
                               baseline.cov = FALSE, covariate, is.numerical = FALSE,  plot.points = TRUE, plot.RegressionLine = FALSE,
                               xlim = 30, givebackNumber = FALSE, plotIT = TRUE, covariate.type = 'attribute', covariate.value.column = NA) {
     
     CFMstructure <- getDataStructure()
-    if( length(EL) == 0 )  EL <- global.dataLoader
+    EL <- global.dataLoader
     
     EL_pMiner <- EL$getData()
     Event <- EL_pMiner$csv.EVENTName
@@ -2708,7 +2708,9 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
     
   }    
   
-  
+  #=================================================================================
+  # constructor
+  #=================================================================================  
   constructor <- function( verboseMode  ) {
     MM <<- matrix("",ncol=1, nrow=1)
     colnames(MM) <<- c("root")
@@ -2722,6 +2724,7 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
     loadedDataset <<- list()
   }
   constructor(verboseMode = verbose.mode)
+  
   return(list(
     "add.node"=add.node,
     "add.path"=add.path,
