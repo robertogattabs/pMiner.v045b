@@ -459,8 +459,13 @@ firstOrderMarkovModel<-function( parameters.list = list() ) {
   #===========================================================
   # plot
   #===========================================================
-  plot<-function(  ){
-    grViz( getModel(kindOfOutput = "grViz" ) )  
+  plot<-function(  plotIt = TRUE, giveItBack = FALSE ){
+    if( plotIt == TRUE ) {
+      grViz( getModel(kindOfOutput = "grViz" ) )  
+    }
+    if( giveItBack == TRUE ) {
+      return(  getModel(kindOfOutput = "grViz" ) )
+    }
   }  
   #===========================================================
   # setIstanceClass
