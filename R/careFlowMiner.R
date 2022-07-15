@@ -2478,7 +2478,235 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
     browser()
     
   } 
-  
+ 
+  #=================================================================================
+  # plotNodeStats
+  #=================================================================================  
+  plotNodeStats <- function(  arr.nodes.from, EL=c(), arr.nodes.to = c(), abs.threshold = NA,
+                              baseline.cov = FALSE, covariate, is.numerical = FALSE,  plot.points = TRUE, plot.RegressionLine = FALSE,
+                              xlim = 30, givebackNumber = FALSE, plotIT = TRUE, covariate.type = 'attribute', covariate.value.column = NA) {
+    
+    CFMstructure <- getDataStructure()
+    if( length(EL) == 0 )  EL <- global.dataLoader
+    
+    EL_pMiner <- EL$getData()
+    Event <- EL_pMiner$csv.EVENTName
+    Date <- EL_pMiner$csv.dateColumnName
+    ID <- EL_pMiner$csv.IDName
+    arr.nodes.from <- gsub('BEGIN', 'root', arr.nodes.from)
+    
+    if(!is.null(arr.nodes.to) & (length(arr.nodes.from) != length(arr.nodes.to))){
+      stop('Il numero di nodi di input deve essere uguale al numero di nodi di output')
+    }
+    
+    #Controllo che il numero di pazienti nel nodo START sia > soglia
+    if(!is.na(abs.threshold)){
+      arr.nodes.from.new <- c()
+      arr.nodes.to.new <- c()
+      n <- 1
+      for(i in 1:length(arr.nodes.from)){
+        nodo <- arr.nodes.from[i]
+        if(CFMstructure$lst.nodi[[nodo]]$hits >= abs.threshold){
+          if(is.null(arr.nodes.to)){
+            arr.nodes.from.new[n] <- nodo
+            n <- n+1
+          }else{
+            arr.nodes.from.new[n] <- nodo
+            arr.nodes.to.new[n] <- arr.nodes.to[i]
+            n <- n+1
+          }
+        }
+      }
+    }else{ 
+      arr.nodes.from.new <- arr.nodes.from
+      arr.nodes.to.new <- arr.nodes.to
+    }
+    
+    ############ STRUTTURA DATI: Preprocessing dei dati ############################### 
+    if(is.null(arr.nodes.to)){  
+      #Struttura dati per grafici puntuali
+      df_tot <- lapply(arr.nodes.from.new, function(nodo){
+        aaa <- EL
+        tmp <- aaa$applyFilter(array.pazienti.to.keep = CFMstructure$lst.nodi[[nodo]]$IPP, whatToReturn = 'dataLoader')
+        paz_nodo_1 <- tmp$getData()
+        mat_cov <- lapply(names(paz_nodo_1$pat.process), function(ID){
+          if(covariate.type == 'attribute'){
+            cov <- ifelse((baseline.cov | nodo == 'root'), paz_nodo_1$pat.process[[ID]][1,covariate], paz_nodo_1$pat.process[[ID]][CFMstructure$lst.nodi[[nodo]]$depth,covariate])
+            id_paz <- ID
+            a <- data.frame(cbind(id_paz, cov))
+            return(a) 
+          }else{
+            cov <- ifelse((baseline.cov | nodo == 'root'), paz_nodo_1$pat.process[[ID]][which(paz_nodo_1$pat.process[[ID]][[Event]] == covariate)[1],covariate.value.column], paz_nodo_1$pat.process[[ID]][CFMstructure$lst.nodi[[nodo]]$depth,covariate.value.column])
+            id_paz <- ID
+            a <- data.frame(cbind(id_paz, cov))
+            return(a)
+          }  
+        })
+        mat_new <- as.data.frame(do.call('rbind', mat_cov))
+        mat_new$nodo <- nodo
+        return(mat_new)
+        
+      })
+      df_tot <- do.call('rbind', df_tot)
+      df_tot$nome_nodo <- unlist(lapply(1:nrow(df_tot), function(x){ CFMstructure$lst.nodi[[df_tot[x, 'nodo']]]$evento } ))
+      df_tot$nome_nodo <- paste(df_tot$nodo, df_tot$nome_nodo, sep = '-' )
+      df_tot <- df_tot[which(!is.na(df_tot$cov)),]
+      df_tot$baseline <- baseline.cov
+      colnames(df_tot) <- c('ID','covariate', 'nodo', 'nome_nodo', 'baseline')
+    } else if(!is.null(arr.nodes.to.new) & is.numerical == TRUE){
+      #Struttura dati per grafici andamentali
+      df_tot <- lapply(1:length(arr.nodes.from.new), function(i){
+        nodo_IN <- arr.nodes.from.new[i]
+        nodo_OUT <- arr.nodes.to.new[i]
+        aaa <- EL
+        depth_in <- ifelse(nodo_IN == 'root', 1, CFMstructure$lst.nodi[[nodo_IN]]$depth)
+        if(nodo_OUT != 'END'){
+          tmp <- aaa$applyFilter(array.pazienti.to.keep = CFMstructure$lst.nodi[[nodo_OUT]]$IPP, whatToReturn = 'dataLoader')
+          paz_nodo_1 <- tmp$getData()
+          mat_cov <- lapply(names(paz_nodo_1$pat.process), function(ID){
+            if(covariate.type == 'attribute'){
+              a <- paz_nodo_1$pat.process[[ID]][depth_in:CFMstructure$lst.nodi[[nodo_OUT]]$depth,]
+              a$time <- (a$pMineR.deltaDate - a[1, 'pMineR.deltaDate'])/1440
+              a <- a[which(!is.na(a[[covariate]])), c(paz_nodo_1$csv.IDName, 'time', covariate)]
+              return(a) 
+            }else{
+              a <- paz_nodo_1$pat.process[[ID]][depth_in:CFMstructure$lst.nodi[[nodo_OUT]]$depth,]
+              a <- a[which(a[[Event]] == covariate), ]
+              a$time <- (a$pMineR.deltaDate - a[1, 'pMineR.deltaDate'])/1440
+              a <- a[, c(paz_nodo_1$csv.IDName, 'time', covariate.value.column)]
+              colnames(a) = c('ID', 'time', covariate)
+              return(a) 
+            }
+          })
+        }else{
+          tmp <- aaa$applyFilter(array.pazienti.to.keep = CFMstructure$lst.nodi[[nodo_IN]]$IPP, whatToReturn = 'dataLoader')
+          paz_nodo_1 <- tmp$getData()
+          mat_cov <- lapply(names(paz_nodo_1$pat.process), function(ID){
+            if(covariate.type == 'attribute'){
+              a <- paz_nodo_1$pat.process[[ID]][depth_in:nrow(paz_nodo_1$pat.process[[ID]]),]
+              a$time <- (a$pMineR.deltaDate - a[1, 'pMineR.deltaDate'])/1440
+              a <- a[which(!is.na(a[[covariate]])), c(paz_nodo_1$csv.IDName, 'time', covariate)]
+              return(a) 
+            }else{
+              a <- paz_nodo_1$pat.process[[ID]][depth_in:nrow(paz_nodo_1$pat.process[[ID]]),]
+              a <- a[which(a[[Event]] == covariate), ]
+              a$time <- (a$pMineR.deltaDate - a[1, 'pMineR.deltaDate'])/1440
+              a <- a[, c(paz_nodo_1$csv.IDName, 'time', covariate.value.column)]
+              colnames(a) <- c('ID', 'time', covariate)
+              return(a)
+            }
+          })
+        }
+        mat_new <- as.data.frame(do.call('rbind', mat_cov))
+        mat_new$nodo_IN <- nodo_IN 
+        mat_new$nodo_OUT <- nodo_OUT
+        return(mat_new)
+      })
+      df_tot <- do.call('rbind', df_tot)
+      df_tot <- df_tot[which(df_tot$time <= xlim),]
+      df_tot[[covariate]] <- as.numeric(df_tot[[covariate]])
+      colnames(df_tot) <- c('ID', 'time', 'covariate', 'nodo_IN', 'nodo_OUT')
+    } else {
+      stop("Non è possibile visualizzare l'andamento nel tempo di una variabile categorica")
+    }
+    
+    ############### PLOT dei grafici ##################################################
+    
+    if(plotIT == TRUE){
+      #Plot dei grafici
+      if(is.null(arr.nodes.to.new)){
+        if (is.numerical == TRUE){
+          # Grafici puntuali variabili numeriche
+          arr.colore <- rainbow(n = length(unique(df_tot$nodo))) 
+          names(arr.colore) <-  unique(df_tot$nome_nodo)
+          df_tot$covariate <- as.numeric(df_tot$covariate)
+          d <- lapply(unique(df_tot$nodo), function(i){
+            a.1 <- df_tot[which(df_tot$nodo == i), ]
+            return(density(a.1$covariate, na.rm = T)$y)
+          })
+          max_lim <- max(unlist(d))
+          matx <- matrix(c(1,2,3,3), byrow = T, nrow = 2)
+          layout(matx, heights = c(0.8, 0.2))
+          for(i in 1:length(unique(df_tot$nodo))){
+            nodo <- unique(df_tot$nodo)[i]
+            nome_nodo <- df_tot[which(df_tot$nodo == nodo)[1], 'nome_nodo']
+            if (i == 1){
+              plot(density(df_tot[which(df_tot$nodo == nodo),'covariate']), lwd = 2, col = arr.colore[nome_nodo],ylim = c(0,max_lim),main = "" )#main = paste('KDE della variabile:', covariata) 
+              
+            }else{
+              lines(density(df_tot[which(df_tot$nodo == nodo), 'covariate']), lwd = 2, col = arr.colore[nome_nodo])
+            }
+          }
+          df_tot$nome_nodo <- factor(df_tot$nome_nodo, levels = names(arr.colore))
+          aaa_p <- boxplot(covariate ~ nome_nodo, data = df_tot, ylab = covariate,xlab = "",  col = arr.colore, xaxt = "n")#main = paste('Boxplot della variabile:', covariata),
+          text(x = 1:length(unique(df_tot$nome_nodo)),y = par("usr")[3] - 0.45,labels = aaa_p$names,xpd = NA,srt = 25,cex = 0.8,adj = 0.965)
+          plot(1, type = "n", axes = F, xlab = "", ylab = "")
+          legend('top',inset = 0,  legend = names(arr.colore), col=arr.colore, lwd = 2, horiz = T,cex=0.7) #text.width = 1, y.intersp = 0.8, bty = 'o',
+          mtext(paste('Variable distribution:',covariate), side=3, line= 45, cex = 1.4) 
+        }else{
+          #Grafici puntuali variabili categoriche
+          counts <- table(df_tot$covariate, df_tot$nome_nodo)
+          arr.colore <- rainbow(n = length(rownames(counts)))
+          names(arr.colore) <-  rownames(counts)
+          x <- barplot(counts, main = paste("Variable distribution:", covariate), xlab="Nodes", col=arr.colore,legend = names(arr.colore), beside = F, xaxt = "n" )
+          text(x, par("usr")[3]-0.25, srt = 15, adj = 1, xpd = TRUE,labels = paste(colnames(counts)), cex = 0.8) 
+        }
+      }else {
+        #Andamento temporale variabile numerica
+        colore <- rainbow(n = length(arr.nodes.from.new)) 
+        arr.colore <- data.frame(cbind(colore, arr.nodes.from.new, arr.nodes.to.new))
+        tipo_punti <- ifelse(plot.points, 'p', 'n')
+        tipo_linea <- ifelse(plot.RegressionLine, 1, 0)
+        tipo_ic <- ifelse(plot.RegressionLine, 2, 0)
+        for (i in 1:length(arr.nodes.from.new)){
+          dati <- df_tot[which(df_tot$nodo_IN == arr.nodes.from.new[i] & df_tot$nodo_OUT == arr.nodes.to.new[i]),]
+          if(plot.RegressionLine){
+            model <- glm(covariate ~ time, data = dati, family = 'gaussian') 
+            #newx <- seq(min(dati$time), xlim, length.out= xlim)
+            #preds <- predict(model, newdata = data.frame(time = newx), interval = 'confidence')
+          }
+          if(i == 1){
+            plot(covariate ~ time, data = dati, type = tipo_punti,pch = 20, xlim = c(0,xlim), xlab = 'Days from input node', col = arr.colore[which(arr.colore$arr.nodes.from == arr.nodes.from.new[i] & arr.colore$arr.nodes.to == arr.nodes.to.new[i]),'colore'] )
+            if(plot.RegressionLine){
+              abline(model, col = arr.colore[which(arr.colore$arr.nodes.from == arr.nodes.from.new[i] & arr.colore$arr.nodes.to == arr.nodes.to.new[i]),'colore'], lwd = 2, lty = tipo_linea)
+            }
+          }else{
+            points(covariate ~ time, data = dati, type = tipo_punti, pch = 20, col = arr.colore[which(arr.colore$arr.nodes.from == arr.nodes.from.new[i] & arr.colore$arr.nodes.to == arr.nodes.to.new[i]),'colore'] )
+            if(plot.RegressionLine){
+              abline(model, col = arr.colore[which(arr.colore$arr.nodes.from == arr.nodes.from.new[i] & arr.colore$arr.nodes.to == arr.nodes.to.new[i]),'colore'], lwd = 2, lty = tipo_linea)
+            }
+          }
+          if(plot.RegressionLine){
+            #lines(newx, preds[ ,3],  col = arr.colore[which(arr.colore$arr.nodes.from == arr.nodes.from.new[i] & arr.colore$arr.nodes.to == arr.nodes.to.new[i]),'colore'], lty = tipo_ic)
+            #lines(newx, preds[ ,2],  col = arr.colore[which(arr.colore$arr.nodes.from == arr.nodes.from.new[i] & arr.colore$arr.nodes.to == arr.nodes.to.new[i]),'colore'], lty = tipo_ic)
+          }
+        }  
+        arr.colore$nomi_nodi_in <- unlist(lapply(arr.colore$arr.nodes.from, function(x){paste(x, CFMstructure$lst.nodi[[x]]$evento, sep = '-')} ))
+        arr.colore$nomi_nodi_in <- gsub('root-root', 'BEGIN', arr.colore$nomi_nodi_in)
+        arr.colore$nomi_nodi_out <- unlist(lapply(arr.colore$arr.nodes.to, function(x){paste(x, CFMstructure$lst.nodi[[x]]$evento, sep = '-')} ))
+        arr.colore$nomi_nodi_out <- gsub('END-', 'END', arr.colore$nomi_nodi_out)#quando cambio label in() lo devo modificare
+        arr.colore$Nome_coppie_nodi <- paste('From:', arr.colore$nomi_nodi_in, 'to:', arr.colore$nomi_nodi_out)
+        legend('topleft', legend <- arr.colore$Nome_coppie_nodi, col=arr.colore[1:nrow(arr.colore),'colore'], lwd = 2, cex=0.8, y.intersp = 0.8, bty = 'o')#text.width = 0.5,
+      }
+    }
+    
+    ############ DATI IN USCITA #######################################################
+    
+    if(givebackNumber == T){
+      # In uscita ho lo struttura dati utilizzata per costruire i grafici
+      df_tot$nodo <- NULL
+      if(!is.null(arr.nodes.to)){
+        df_tot$NODO_IN <-  unlist(lapply(df_tot$nodo_IN, function(x){paste(x, CFMstructure$lst.nodi[[x]]$evento, sep = '-')} ))
+        df_tot$NODO_OUT <-  unlist(lapply(df_tot$nodo_OUT, function(x){paste(x, CFMstructure$lst.nodi[[x]]$evento, sep = '-')} ))
+        df_tot$nodo_IN <- NULL
+        df_tot$nodo_OUT <-  NULL
+        df_tot$NODO_IN <- gsub('root-root', 'BEGIN', df_tot$NODO_IN)
+        df_tot$NODO_OUT <- gsub('END-', 'END', df_tot$NODO_OUT)#quando cambio label in() lo devo modificare
+      }
+      return(df_tot)
+    }
+    
+  }    
   
   
   constructor <- function( verboseMode  ) {
@@ -2503,6 +2731,7 @@ old.careFlowMiner <- function( verbose.mode = FALSE ) {
     "getPatientWithSpecificedPath"=getPatientWithSpecificedPath,
     "plotCFGraph"=plotCFGraph,
     "plotCFGraphComparison"= plotCFGraphComparison,
+    "plotNodeStats" = plotNodeStats,
     "pathBeetweenStackedNodes"=pathBeetweenStackedNodes
   ))
 }
