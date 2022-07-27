@@ -1,4 +1,4 @@
-#' A quality of data inspector
+#' A quality of data inspector, second Version
 #'
 #' @description   a QoD inspector class
 #' @export
