@@ -331,6 +331,7 @@ firstOrderMarkovModel<-function( parameters.list = list() ) {
     # browser()
     colnames(matrice.KM)<-c("ID","time","outcome")
     matrice.KM <- as.data.frame(matrice.KM)
+    
     matrice.KM$time <- as.numeric(levels(matrice.KM$time))[matrice.KM$time]
     matrice.KM$outcome <- as.numeric(levels(matrice.KM$outcome))[matrice.KM$outcome]
     
