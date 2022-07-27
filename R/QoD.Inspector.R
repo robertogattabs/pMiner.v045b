@@ -1,7 +1,7 @@
 #' A quality of data inspector
 #'
 #' @description   a QoD inspector class
-#' @export
+
 QoDInspector <- function( UM = "" ) {
   global.processInstances.toSymbol <- list()
   global.dataLoader <- c();
