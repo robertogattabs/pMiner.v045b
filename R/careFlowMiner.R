@@ -438,7 +438,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
                  "heatmap.based.on.median.time" = heatmap.based.on.median.time))
   }
   
-  plotCFGraphComparison <- function( stratifyFor , stratificationValues=c(), 
+  plotCFGraphComparison <- function( stratifyFor , stratificationValues=c(), stratificationThreshold = NA,
                                      arr.stratificationValues.A = c(), arr.stratificationValues.B = c(),
                                      depth = 4, fisher.threshold = 0.1,
                                      checkDurationFromRoot = FALSE, 
@@ -449,6 +449,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     
     # stratificationValues <- c(1,2)
     b <- plot.comparison( stratifyFor = stratifyFor, stratificationValues = stratificationValues, 
+                          stratificationThreshold = stratificationThreshold,
                           arr.stratificationValues.A = arr.stratificationValues.A, arr.stratificationValues.B = arr.stratificationValues.B,
                           depth = depth,
                           fisher.threshold = fisher.threshold, checkDurationFromRoot = checkDurationFromRoot,
@@ -475,7 +476,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     return(arr.ID)
   }
   
-  plot.comparison <- function( stratifyFor, stratificationValues, 
+  plot.comparison <- function( stratifyFor, stratificationValues, stratificationThreshold = NA,
                                arr.stratificationValues.A = c(), arr.stratificationValues.B = c(),
                                fisher.threshold = 0.1, checkDurationFromRoot = FALSE,
                                hitsMeansReachAGivenFinalState = FALSE, finalStateForHits = c(),
@@ -502,8 +503,14 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
       # browser()
       if( debug.it == TRUE)  browser()
       # -im rg - stratificationValues
-      first.ID <- unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]] %in% arr.stratificationValues.A ) ])
-      second.ID <-unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]] %in% arr.stratificationValues.B ) ])
+      
+      if( !is.na(stratificationThreshold) ) {
+        first.ID <- unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]] <= stratificationThreshold ) ])
+        second.ID <-unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]] > stratificationThreshold ) ])
+      } else {
+        first.ID <- unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]] %in% arr.stratificationValues.A ) ])
+        second.ID <-unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]] %in% arr.stratificationValues.B ) ])
+      }
       # first.ID <- unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]]==stratificationValues[1]) ])
       # second.ID <-unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]]==stratificationValues[2]) ])
       # -fm rg - stratificationValues
@@ -570,6 +577,7 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
         # penwidth <- 5*(percentuale/100)+0.2
         
         res <- plot.comparison( stratifyFor = stratifyFor, stratificationValues = stratificationValues, 
+                                stratificationThreshold = stratificationThreshold,
                                 arr.stratificationValues.A = arr.stratificationValues.A, 
                                 arr.stratificationValues.B = arr.stratificationValues.B,
                                 starting.ID = son, currentLevel = currentLevel + 1, sequenza = c(sequenza,son),
@@ -835,8 +843,13 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     # }
     # browser()
     # -im rg - stratificationValues
-    first.ID <- unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]] %in% arr.stratificationValues.A ) ])
-    second.ID <-unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]] %in% arr.stratificationValues.B ) ])
+    if( !is.na(stratificationThreshold) ) {
+      first.ID <- unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]] <= stratificationThreshold ) ])
+      second.ID <-unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]] > stratificationThreshold ) ])
+    } else {
+      first.ID <- unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]] %in% arr.stratificationValues.A ) ])
+      second.ID <-unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]] %in% arr.stratificationValues.B ) ])
+    }
     # first.ID <- unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]]==stratificationValues[1]) ])
     # second.ID <-unique(loadedDataset$original.CSV[[IDName]][  which(loadedDataset$original.CSV[[stratifyFor]]==stratificationValues[2]) ])
     # -fm rg - stratificationValues
@@ -845,6 +858,8 @@ careFlowMiner <- function( verbose.mode = FALSE ) {
     
     quanti.first <- sum( ID %in% first.ID)
     quanti.second <- sum( ID %in% second.ID)
+    # browser()
+    # cat("\n ", length(quanti.first) , " - ", length(quanti.second)  )
     
     validi.first.ID <- ID[ID %in% first.ID]
     validi.second.ID <- ID[ID %in% second.ID]
